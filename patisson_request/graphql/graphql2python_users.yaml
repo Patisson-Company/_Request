@@ -1,0 +1,2 @@
+schema: patisson_request/graphql/schemas/users.graphql
+output: patisson_request/graphql/models/users_models.py

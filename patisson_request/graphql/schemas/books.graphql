@@ -1,0 +1,147 @@
+type Book {
+    id: ID!
+    google_id: String!
+    title: String!
+    publisher: String
+    publishedDate: String
+    description: String
+    pageCount: Int
+    maturityRating: String
+    smallThumbnail: String
+    thumbnail: String
+    language: String
+    authors: [Author]
+    categories: [Category]
+}
+
+type Author {
+    name: String!
+    books: [Book]
+}
+
+type Category {
+    name: String!
+    books: [Book]
+}
+
+type Review {
+    id: ID!
+    user_id: String!
+    book: Book!
+    stars: Int!
+    comment: String
+    actual: Boolean!
+}
+
+type Error {
+    error: String!
+    extra: String
+}
+
+type ReviewResponse {
+  success: Boolean!
+  errors: [Error]
+}
+
+type Query {
+    books(
+        ids: [ID],
+        titles: [String],
+        like_title: String,
+        google_ids: [String],
+        publishers: [String],
+        exact_publishedDate: String,
+        from_publishedDate: String,
+        to_publishedDate: String,
+        like_description: String,
+        exact_pageCount: Int,
+        from_pageCount: Int,
+        to_pageCount: Int,
+        maturityRaiting: String,
+        languages: [String],
+        offset: Int,
+        limit: Int,
+        search: [String]
+    ): [Book]
+
+    booksDeep(
+        ids: [ID],
+        titles: [String],
+        like_title: String,
+        google_ids: [String],
+        publishers: [String],
+        exact_publishedDate: String,
+        from_publishedDate: String,
+        to_publishedDate: String,
+        like_description: String,
+        exact_pageCount: Int,
+        from_pageCount: Int,
+        to_pageCount: Int,
+        maturityRaiting: String,
+        languages: [String],
+        authors: [String],
+        categories: [String],
+        limit: Int,
+        search: [String]
+    ): [Book]
+
+    authors(
+        names: [String],
+        like_names: String,
+        offset: Int,
+        limit: Int,
+        search: [String]
+    ): [Author]
+
+    categories(
+        names: [String],
+        like_names: String,
+        offset: Int,
+        limit: Int,
+        search: [String]
+    ): [Category]
+
+    reviews(
+        ids: [ID],
+        user_ids: [String],
+        stars: [Int],
+        comments: [String],
+        like_comment: String,
+        actual: Boolean,
+        offset: Int,
+        limit: Int
+    ): [Review]
+
+    reviewsDeep(
+        ids: [ID],
+        user_ids: [String],
+        books: [String],
+        from_stars: Int,
+        before_stars: Int,
+        like_comment: String,
+        actual: Boolean,
+        offset: Int,
+        limit: Int
+    ): [Review]
+}
+
+type Mutation {
+    createReview(
+        user_id: String!, 
+        book_id: ID!, 
+        stars: Int!, 
+        comment: String
+    ): ReviewResponse
+
+    updateReview(
+        user_id: String!, 
+        book_id: ID!, 
+        stars: Int!, 
+        comment: String
+    ): ReviewResponse
+
+    deleteReview(
+        user_id: String!, 
+        book_id: ID!
+    ): ReviewResponse
+}
