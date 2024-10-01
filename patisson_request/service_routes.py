@@ -1,22 +1,31 @@
-from typing import Any, List, Optional, Union
+from typing import Any, Generic, List, Optional, Union
+from patisson_request import jwt_tokens 
+from pydantic import BaseModel, Field
 
-from pydantic import BaseModel
-
-from patisson_request.graphql.models.books_model import *
-from patisson_request.graphql.queries import *
-from patisson_request.service_responses import *
+from patisson_request.graphql.queries import format_strings
+from patisson_request.graphql.queries import build_query
+from patisson_request.service_responses import AuthenticationResponse, BooksResponse, HealthCheckBodyResponse, ResponseType
 from patisson_request.services import Service
 from patisson_request.types import *
 
+__all__ = [
+    'RouteAuthentication',
+    'RouteBooks'
+]
 
 class HttpxPostData(BaseModel):
-    json: Optional[Any] = None
+    json_: Optional[Any] = Field(None, alias='json')
     data: Optional[RequestData] = None
     content: Optional[RequestContent] = None   
     files: Optional[RequestFiles] = None
     
     class Config:
         arbitrary_types_allowed = True
+    
+    def model_dump(self, *args, **kwargs):
+        kwargs.setdefault('by_alias', True)
+        return super().dict(*args, **kwargs)
+    
     
 class BaseRequest(BaseModel, Generic[ResponseType]):
     service: Service
@@ -30,14 +39,13 @@ class GetRequest(BaseRequest[ResponseType], Generic[ResponseType]):
     ''''''
 
 class PostRequest(BaseRequest[ResponseType], Generic[ResponseType]):
-    post_data: HttpxPostData = HttpxPostData()
+    post_data: HttpxPostData = HttpxPostData()  # type: ignore[reportCallIssue]
     
     def __neg__(self) -> tuple[Service, Path, type[ResponseType], HttpxPostData]:
         base_params = super().__neg__()
         return (
             *base_params, self.post_data
         )
-
 
 
 def url_params(**kwargs) -> str:
@@ -82,7 +90,7 @@ class RouteAuthentication:
                     
                     @staticmethod
                     def verify(client_access_token: Token
-                               ) -> GetRequest[token.ClientPayload]:
+                               ) -> GetRequest[jwt_tokens.ClientPayload]:
                         path = 'api/v1/client/jwt/verify?{}'
                         return GetRequest(
                             service=Service.AUTHENTICATION,
@@ -91,7 +99,7 @@ class RouteAuthentication:
                                     client_access_token=client_access_token
                                 )
                             ),
-                            response_type=token.ClientPayload
+                            response_type=jwt_tokens.ClientPayload
                         )
                     
                     @staticmethod
@@ -132,7 +140,7 @@ class RouteAuthentication:
                     
                     @staticmethod
                     def verify(verified_service_jwt: Token
-                               ) -> GetRequest[token.ServicePayload]:
+                               ) -> GetRequest[jwt_tokens.ServicePayload]:
                         path = 'api/v1/service/jwt/verify?{}'
                         return GetRequest(
                             service=Service.AUTHENTICATION,
@@ -141,7 +149,7 @@ class RouteAuthentication:
                                     verified_service_jwt=verified_service_jwt
                                 )
                             ),
-                            response_type=token.ServicePayload
+                            response_type=jwt_tokens.ServicePayload
                         )
                     
                     @staticmethod
@@ -191,7 +199,7 @@ class RouteBooks:
             offset: Optional[int] = None,
             limit: Optional[int] = None,
             search: Optional[List[str]] = None
-        ) -> PostRequest[BooksResponse.books]:
+        ) -> PostRequest[BooksResponse.Gbooks]:
             args = [
                 f'ids: {format_strings(ids)}' if ids is not None else None,
                 f'titles: {format_strings(titles)}' if titles is not None else None,
@@ -211,11 +219,10 @@ class RouteBooks:
                 f'limit: {limit}' if limit is not None else None,
                 f'search: {format_strings(search)}' if search is not None else None,
             ]
-                
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.books,
+                response_type=BooksResponse.Gbooks,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='books', args=args, fields=fields)}
                     )
@@ -242,7 +249,7 @@ class RouteBooks:
             categories: Optional[List[str]] = None,
             limit: Optional[int] = None,
             search: Optional[List[str]] = None
-        ) -> PostRequest[BooksResponse.booksDeep]:
+        ) -> PostRequest[BooksResponse.GbooksDeep]:
             args = [
                 f'ids: {format_strings(ids)}' if ids is not None else None,
                 f'titles: {format_strings(titles)}' if titles is not None else None,
@@ -266,7 +273,7 @@ class RouteBooks:
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.booksDeep,
+                response_type=BooksResponse.GbooksDeep,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='booksDeep', args=args, fields=fields)}
                     )
@@ -280,7 +287,7 @@ class RouteBooks:
             offset: Optional[int] = None,
             limit: Optional[int] = None,
             search: Optional[List[str]] = None
-        ) -> PostRequest[BooksResponse.authors]:
+        ) -> PostRequest[BooksResponse.Gauthors]:
             args = [
                 f'names: {format_strings(names)}' if names is not None else None,
                 f'like_names: "{like_names}"' if like_names is not None else None,
@@ -291,7 +298,7 @@ class RouteBooks:
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.authors,
+                response_type=BooksResponse.Gauthors,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='authors', args=args, fields=fields)}
                     )
@@ -305,7 +312,7 @@ class RouteBooks:
             offset: Optional[int] = None,
             limit: Optional[int] = None,
             search: Optional[List[str]] = None
-        ) -> PostRequest[BooksResponse.categories]:
+        ) -> PostRequest[BooksResponse.Gcategories]:
             args = [
                 f'names: {format_strings(names)}' if names is not None else None,
                 f'like_names: "{like_names}"' if like_names is not None else None,
@@ -316,7 +323,7 @@ class RouteBooks:
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.categories,
+                response_type=BooksResponse.Gcategories,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='categories', args=args, fields=fields)}
                 )
@@ -333,7 +340,7 @@ class RouteBooks:
             actual: Optional[bool] = None,
             offset: Optional[int] = None,
             limit: Optional[int] = None
-        ) -> PostRequest[BooksResponse.reviews]:
+        ) -> PostRequest[BooksResponse.Greviews]:
             args = [
                 f'ids: {format_strings(ids)}' if ids is not None else None,
                 f'user_ids: {format_strings(user_ids)}' if user_ids is not None else None,
@@ -347,7 +354,7 @@ class RouteBooks:
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.reviews,
+                response_type=BooksResponse.Greviews,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='reviews', args=args, fields=fields)}
                 )
@@ -365,7 +372,7 @@ class RouteBooks:
             actual: Optional[bool] = None,
             offset: Optional[int] = None,
             limit: Optional[int] = None
-        ) -> PostRequest[BooksResponse.reviewsDeep]:
+        ) -> PostRequest[BooksResponse.GreviewsDeep]:
             args = [
                 f'ids: {format_strings(ids)}' if ids is not None else None,
                 f'user_ids: {format_strings(user_ids)}' if user_ids is not None else None,
@@ -380,7 +387,7 @@ class RouteBooks:
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.reviewsDeep,
+                response_type=BooksResponse.GreviewsDeep,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='mutation', name='reviewsDeep', args=args, fields=fields)}
                 )
@@ -393,7 +400,7 @@ class RouteBooks:
             book_id: str,
             stars: int,
             comment: Optional[str] = None
-        ) -> PostRequest[BooksResponse.createReview]:
+        ) -> PostRequest[BooksResponse.GcreateReview]:
             args = [
                 f'user_id: "{user_id}"',
                 f'book_id: "{book_id}"',
@@ -403,7 +410,7 @@ class RouteBooks:
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.createReview,
+                response_type=BooksResponse.GcreateReview,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='mutation', name='createReview', args=args, fields=fields)}
                 )
@@ -416,7 +423,7 @@ class RouteBooks:
             book_id: str,
             stars: int,
             comment: Optional[str] = None
-        ) -> PostRequest[BooksResponse.updateReview]:
+        ) -> PostRequest[BooksResponse.GupdateReview]:
             args = [
                 f'user_id: "{user_id}"',
                 f'book_id: "{book_id}"',
@@ -426,7 +433,7 @@ class RouteBooks:
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.updateReview,
+                response_type=BooksResponse.GupdateReview,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='mutation', name='updateReview', args=args, fields=fields)}
                 )
@@ -437,7 +444,7 @@ class RouteBooks:
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
             user_id: str,
             book_id: str
-        ) -> PostRequest[BooksResponse.deleteReview]:
+        ) -> PostRequest[BooksResponse.GdeleteReview]:
             args = [
                 f'user_id: "{user_id}"',
                 f'book_id: "{book_id}"',
@@ -445,7 +452,7 @@ class RouteBooks:
             return PostRequest(
                 service=Service.BOOKS,
                 path='graphql',
-                response_type=BooksResponse.deleteReview,
+                response_type=BooksResponse.GdeleteReview,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='mutation', name='deleteReview', args=args, fields=fields)}
                 )

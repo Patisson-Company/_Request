@@ -3,6 +3,16 @@ from patisson_request.graphql.models.books_model import *
 from patisson_request.graphql.models.users_models import *
 from patisson_request.types import *
 
+__all__ = [
+    'QBook',
+    'QAuthor',
+    'QCategory',
+    'QReview',
+    'QError',
+    'QReviewResponse',
+    'QUser'
+]
+
 ID: TypeAlias = str
 
 class QBook:

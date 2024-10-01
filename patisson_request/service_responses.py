@@ -1,11 +1,11 @@
-from typing import Generic, List, Optional, TypeAlias, TypeVar, Union
+from typing import Generic, List, Optional, TypeAlias, TypeVar
 
-from patisson_errors.core import ErrorSchema
-from patisson_tokens.jwt import schemas as token
 from pydantic import BaseModel
-
+from patisson_request.errors import ErrorSchema
+from patisson_request import jwt_tokens
 from patisson_request.graphql.models import books_model as BooksGQL
 from patisson_request.graphql.models import users_models as UsersGQL
+
 
 GraphqlResponseType = TypeVar("GraphqlResponseType")
 
@@ -45,8 +45,12 @@ class GraphqlResponse(BaseModel, Generic[GraphqlResponseType]):
     data: GraphqlResponseType
 
 
-class ErrorBodyResponse(BaseModel):
+class ErrorBodyResponse_4xx(BaseModel):
     detail: list[ErrorSchema] | str
+
+
+class ErrorBodyResponse_5xx(BaseModel):
+    error: str
 
 
 class HealthCheckBodyResponse(BaseModel):
@@ -63,39 +67,39 @@ class AuthenticationResponse:
 
 class BooksResponse:
         
-    class books(GraphqlResponse[_GQLResponseFields.BooksService.books]):
+    class Gbooks(GraphqlResponse[_GQLResponseFields.BooksService.books]):
         ''''''
         
-    class booksDeep(GraphqlResponse[_GQLResponseFields.BooksService.booksDeep]):
+    class GbooksDeep(GraphqlResponse[_GQLResponseFields.BooksService.booksDeep]):
         ''''''
         
-    class authors(GraphqlResponse[_GQLResponseFields.BooksService.authors]):
+    class Gauthors(GraphqlResponse[_GQLResponseFields.BooksService.authors]):
         ''''''
         
-    class categories(GraphqlResponse[_GQLResponseFields.BooksService.categories]):
+    class Gcategories(GraphqlResponse[_GQLResponseFields.BooksService.categories]):
         ''''''
     
-    class reviews(GraphqlResponse[_GQLResponseFields.BooksService.reviews]):
+    class Greviews(GraphqlResponse[_GQLResponseFields.BooksService.reviews]):
         ''''''
         
-    class reviewsDeep(GraphqlResponse[_GQLResponseFields.BooksService.reviewsDeep]):
+    class GreviewsDeep(GraphqlResponse[_GQLResponseFields.BooksService.reviewsDeep]):
         ''''''
 
-    class createReview(GraphqlResponse[_GQLResponseFields.BooksService.createReview]):
+    class GcreateReview(GraphqlResponse[_GQLResponseFields.BooksService.createReview]):
         ''''''
     
-    class updateReview(GraphqlResponse[_GQLResponseFields.BooksService.updateReview]):
+    class GupdateReview(GraphqlResponse[_GQLResponseFields.BooksService.updateReview]):
         ''''''
     
-    class deleteReview(GraphqlResponse[_GQLResponseFields.BooksService.deleteReview]):
+    class GdeleteReview(GraphqlResponse[_GQLResponseFields.BooksService.deleteReview]):
         ''''''
 
 
 ResponseBody: TypeAlias = (
-    ErrorBodyResponse | HealthCheckBodyResponse 
-    | token.ClientPayload | token.ServicePayload
-    | token.RefreshPayload | AuthenticationResponse.TokensSet
-    | GraphqlResponse
+    ErrorBodyResponse_4xx | ErrorBodyResponse_5xx
+    | HealthCheckBodyResponse | GraphqlResponse
+    | jwt_tokens.ClientPayload | jwt_tokens.ServicePayload
+    | jwt_tokens.RefreshPayload | AuthenticationResponse.TokensSet   
 )
 
 ResponseType = TypeVar("ResponseType", bound=ResponseBody)

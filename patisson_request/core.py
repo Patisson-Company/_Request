@@ -5,14 +5,15 @@ from datetime import timedelta
 from typing import Any, Generic, NoReturn, Optional, Sequence
 
 import httpx
-from patisson_errors.core import ErrorCode
 from pydantic import BaseModel
 
 from patisson_request.cache import BaseAsyncTTLCache, RedisAsyncCache
+from patisson_request.errors import ErrorCode
 from patisson_request.service_responses import (AuthenticationResponse,
-                                                ErrorBodyResponse,
+                                                ErrorBodyResponse_4xx,
+                                                ErrorBodyResponse_5xx,
                                                 ResponseType)
-from patisson_request.service_routes import *
+from patisson_request.service_routes import HttpxPostData, RouteAuthentication
 from patisson_request.services import Service
 from patisson_request.types import *
 
@@ -48,6 +49,8 @@ class SelfAsyncService:
         if self.self_service in self.external_services:
             raise RuntimeError(f'The current service {self.self_service} is in the list of external services')
         self.cache = self.cache_type(service=self.self_service, **self.cache_kwargs)
+    
+    def activate_tokens_update_task(self):
         loop = asyncio.get_event_loop()
         loop.create_task(self.tokens_update_task())
     
@@ -143,13 +146,22 @@ class SelfAsyncService:
                 headers=headers, max_reconnections=max_reconnections,
                 timeout=timeout, use_auth_token=use_auth_token, 
                 header_auth_format=header_auth_format, **httpx_kwargs)
-        
-        if httpx_response.status_code >= 400:
+            
+        if httpx_response.status_code >= 500:
             response = Response(
                 status_code=httpx_response.status_code,
                 headers=httpx_response.headers,  # type: ignore[reportArgumentType]
                 is_error=True,
-                body=ErrorBodyResponse(
+                body=ErrorBodyResponse_5xx(
+                    error=httpx_response.text
+                )
+            )
+        elif httpx_response.status_code >= 400:
+            response = Response(
+                status_code=httpx_response.status_code,
+                headers=httpx_response.headers,  # type: ignore[reportArgumentType]
+                is_error=True,
+                body=ErrorBodyResponse_4xx(
                     **json.loads(httpx_response.text)
                 )
             )
