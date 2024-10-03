@@ -109,6 +109,9 @@ class SelfAsyncService:
         use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None,
         **httpx_kwargs) -> Response[ResponseType]:
         
+        if service not in self.external_services:
+            raise ConnectionError(f'Access to service {service} is not allowed')
+        
         timeout = self.default_timeout if timeout is None else timeout
         max_reconnections = (self.default_max_reconnections if max_reconnections is None
                              else max_reconnections)
