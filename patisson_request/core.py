@@ -9,8 +9,7 @@ from pydantic import BaseModel
 
 from patisson_request.cache import BaseAsyncTTLCache, RedisAsyncCache
 from patisson_request.errors import ErrorCode
-from patisson_request.service_responses import (AuthenticationResponse,
-                                                ErrorBodyResponse_4xx,
+from patisson_request.service_responses import (ErrorBodyResponse_4xx,
                                                 ErrorBodyResponse_5xx,
                                                 ResponseType)
 from patisson_request.service_routes import HttpxPostData, RouteAuthentication
@@ -66,7 +65,7 @@ class SelfAsyncService:
         response = await self.post_request(
             *-RouteAuthentication.api.v1.service.jwt.create(
                 login=self.login, password=self.password
-            ), use_cache=False, use_auth_token=False
+            ), use_auth_token=False
         )
         if response.is_error:
             raise ConnectionError(f'failed to get jwt tokens. Response: {response}')
@@ -78,7 +77,7 @@ class SelfAsyncService:
         response = await self.post_request(
             *-RouteAuthentication.api.v1.service.jwt.update(
                 refresh_token=self.refresh_token
-            ), use_cache=False
+            )
         )
         if response.is_error:
             return await self.get_tokens_by_login()
