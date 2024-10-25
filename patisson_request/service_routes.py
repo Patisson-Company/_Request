@@ -1,17 +1,19 @@
-from typing import Any, Generic, List, Optional, Union
-from patisson_request import jwt_tokens 
+from typing import Any, Generic, List, Optional, Sequence, Union
+
 from pydantic import BaseModel, Field
 
-from patisson_request.graphql.queries import format_strings
-from patisson_request.graphql.queries import build_query
-from patisson_request.service_responses import AuthenticationResponse, BooksResponse, HealthCheckBodyResponse, ResponseType
+from patisson_request import jwt_tokens
+from patisson_request.graphql.queries import build_query, format_strings
+from patisson_request.roles import ClientPermissions, ClientRole, Role
+from patisson_request.service_responses import (AuthenticationResponse,
+                                                BooksResponse,
+                                                HealthCheckBodyResponse,
+                                                ResponseType)
 from patisson_request.services import Service
-from patisson_request.types import *
+from patisson_request.types import (GraphqlField, NestedGraphqlFields, Path,
+                                    RequestContent, RequestData, RequestFiles,
+                                    Seconds, Token)
 
-__all__ = [
-    'RouteAuthentication',
-    'RouteBooks'
-]
 
 class HttpxPostData(BaseModel):
     json_: Optional[Any] = Field(None, alias='json')
@@ -55,6 +57,31 @@ def url_params(**kwargs) -> str:
             query += f'{kwarg}={kwargs[kwarg]}&'
     return query
 
+###
+
+class AuthenticationRequestBodies:
+    
+    class CreateClientRequest(BaseModel):
+        client_id: str
+        client_role: str
+        expire_in: Optional[Seconds] 
+        
+    class CreateServiceRequest(BaseModel):
+        login: str
+        password: str
+        
+    class VerifyRequest(BaseModel):
+        access_token: Token
+
+    class UpdateClientRequest(BaseModel):
+        client_access_token: Token
+        client_refresh_token: Token
+        expire_in: Optional[Seconds]
+        
+    class UpdateServiceRequest(BaseModel):
+        refresh_token: Token
+
+###
 
 class RouteAuthentication:
     
@@ -72,51 +99,51 @@ class RouteAuthentication:
                 class jwt:
                     
                     @staticmethod
-                    def create(client_id: str, client_role: str,
-                               expire_in: Optional[Seconds] = None
-                               ) -> GetRequest[AuthenticationResponse.TokensSet]:
-                        path = 'api/v1/client/jwt/create?{}'
-                        return GetRequest(
+                    def create(client_id: str, client_role: Role[ClientPermissions],
+                            expire_in: Optional[Seconds] = None
+                            ) -> PostRequest[AuthenticationResponse.TokensSet]:
+                        path = 'api/v1/client/jwt/create'
+                        return PostRequest(
                             service=Service.AUTHENTICATION,
-                            path=path.format(
-                                url_params(
-                                    client_id=client_id, 
-                                    client_role=client_role, 
+                            path=path,
+                            post_data=HttpxPostData(
+                                json=AuthenticationRequestBodies.CreateClientRequest(
+                                    client_id=client_id,
+                                    client_role=client_role.name,
                                     expire_in=expire_in
-                                )
-                            ), 
+                                )),
                             response_type=AuthenticationResponse.TokensSet
                         )
                     
                     @staticmethod
                     def verify(client_access_token: Token
-                               ) -> GetRequest[jwt_tokens.ClientPayload]:
-                        path = 'api/v1/client/jwt/verify?{}'
-                        return GetRequest(
+                            ) -> PostRequest[jwt_tokens.ClientPayload]:
+                        path = 'api/v1/client/jwt/verify'
+                        return PostRequest(
                             service=Service.AUTHENTICATION,
-                            path=path.format(
-                                url_params(
-                                    client_access_token=client_access_token
-                                )
-                            ),
+                            path=path,
+                            post_data=HttpxPostData(
+                                json=AuthenticationRequestBodies.VerifyRequest(
+                                    access_token=client_access_token
+                                )),
                             response_type=jwt_tokens.ClientPayload
                         )
                     
                     @staticmethod
                     def update(client_access_token: Token,
-                               client_refresh_token: Token,
-                               expire_in: Optional[Seconds]
-                               ) -> GetRequest[AuthenticationResponse.TokensSet]:
-                        path = 'api/v1/client/jwt/update?{}'
-                        return GetRequest(
+                            client_refresh_token: Token,
+                            expire_in: Optional[Seconds] = None
+                            ) -> PostRequest[AuthenticationResponse.TokensSet]:
+                        path = 'api/v1/client/jwt/update'
+                        return PostRequest(
                             service=Service.AUTHENTICATION,
-                            path=path.format(
-                                url_params(
+                            path=path,
+                            post_data=HttpxPostData(
+                                json=AuthenticationRequestBodies.UpdateClientRequest(
                                     client_access_token=client_access_token,
                                     client_refresh_token=client_refresh_token,
                                     expire_in=expire_in
-                                )
-                            ),
+                                )),
                             response_type=AuthenticationResponse.TokensSet
                         )
             
@@ -125,44 +152,44 @@ class RouteAuthentication:
                     
                     @staticmethod
                     def create(login: str, password: str
-                               ) -> GetRequest[AuthenticationResponse.TokensSet]:
-                        path = 'api/v1/service/jwt/create?{}'
-                        return GetRequest(
+                            ) -> PostRequest[AuthenticationResponse.TokensSet]:
+                        path = 'api/v1/service/jwt/create'
+                        return PostRequest(
                             service=Service.AUTHENTICATION,
-                            path=path.format(
-                                url_params(
-                                    login=login, 
+                            path=path,
+                            post_data=HttpxPostData(
+                                json=AuthenticationRequestBodies.CreateServiceRequest(
+                                    login=login,
                                     password=password
-                                )
-                            ),
+                                )),
                             response_type=AuthenticationResponse.TokensSet
                         )
                     
                     @staticmethod
                     def verify(verified_service_jwt: Token
-                               ) -> GetRequest[jwt_tokens.ServicePayload]:
-                        path = 'api/v1/service/jwt/verify?{}'
-                        return GetRequest(
+                            ) -> PostRequest[jwt_tokens.ServicePayload]:
+                        path = 'api/v1/service/jwt/verify'
+                        return PostRequest(
                             service=Service.AUTHENTICATION,
-                            path=path.format(
-                                url_params(
-                                    verified_service_jwt=verified_service_jwt
-                                )
-                            ),
+                            path=path,
+                            post_data=HttpxPostData(
+                                json=AuthenticationRequestBodies.VerifyRequest(
+                                    access_token=verified_service_jwt
+                                )),
                             response_type=jwt_tokens.ServicePayload
                         )
                     
                     @staticmethod
                     def update(refresh_token: Token
-                               ) -> GetRequest[AuthenticationResponse.TokensSet]:
-                        path = 'api/v1/service/jwt/update?{}'
-                        return GetRequest(
+                            ) -> PostRequest[AuthenticationResponse.TokensSet]:
+                        path = 'api/v1/service/jwt/update'
+                        return PostRequest(
                             service=Service.AUTHENTICATION,
-                            path=path.format(
-                                url_params(
+                            path=path,
+                            post_data=HttpxPostData(
+                                json=AuthenticationRequestBodies.UpdateServiceRequest(
                                     refresh_token=refresh_token
-                                )
-                            ),
+                                )),
                             response_type=AuthenticationResponse.TokensSet
                         )
 

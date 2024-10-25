@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='patisson_request',
-    version='1.0.2',
+    version='1.0.3',
     packages=find_packages(),
     install_requires=[
         "httpx",
@@ -10,7 +10,7 @@ setup(
         "redis"
     ],
     author='EliseyGodX',
-    description='A library that handles errors in responses',
+    description='a library that regulates the interaction between microservices',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/Patisson-Company/_Request',

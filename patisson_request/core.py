@@ -63,7 +63,7 @@ class SelfAsyncService:
         return json.loads(bytes_)
     
     async def get_tokens_by_login(self) -> None:
-        response = await self.get_request(
+        response = await self.post_request(
             *-RouteAuthentication.api.v1.service.jwt.create(
                 login=self.login, password=self.password
             ), use_cache=False, use_auth_token=False
@@ -75,7 +75,7 @@ class SelfAsyncService:
         
     
     async def get_tokens(self) -> None:
-        response = await self.get_request(
+        response = await self.post_request(
             *-RouteAuthentication.api.v1.service.jwt.update(
                 refresh_token=self.refresh_token
             ), use_cache=False
