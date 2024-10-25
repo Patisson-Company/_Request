@@ -18,7 +18,7 @@ from patisson_request.services import Service
 from patisson_request.types import *
 
 
-class Response(BaseModel, Generic[ResponseType]):
+class Response( BaseModel, Generic[ResponseType]):
     status_code: int
     headers: dict[str, str]
     is_error: bool
@@ -70,9 +70,8 @@ class SelfAsyncService:
         )
         if response.is_error:
             raise ConnectionError(f'failed to get jwt tokens. Response: {response}')
-        token_set: AuthenticationResponse.TokensSet = response.body  # type: ignore[reportAssignmentType]
-        self.access_token = token_set.access_token
-        self.refresh_token = token_set.refresh_token
+        self.access_token = response.body.access_token
+        self.refresh_token = response.body.refresh_token
         
     
     async def get_tokens(self) -> None:
@@ -83,9 +82,8 @@ class SelfAsyncService:
         )
         if response.is_error:
             return await self.get_tokens_by_login()
-        token_set: AuthenticationResponse.TokensSet = response.body  # type: ignore[reportAssignmentType]
-        self.access_token = token_set.access_token
-        self.refresh_token = token_set.refresh_token
+        self.access_token = response.body.access_token
+        self.refresh_token = response.body.refresh_token
     
     
     async def tokens_update_task(self) -> NoReturn:
@@ -109,9 +107,6 @@ class SelfAsyncService:
         use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None,
         **httpx_kwargs) -> Response[ResponseType]:
         
-        if service not in self.external_services:
-            raise ConnectionError(f'Access to service {service} is not allowed')
-        
         timeout = self.default_timeout if timeout is None else timeout
         max_reconnections = (self.default_max_reconnections if max_reconnections is None
                              else max_reconnections)
@@ -132,14 +127,14 @@ class SelfAsyncService:
                 try:
                     httpx_response = await client.request(
                         method, url, headers=headers, timeout=timeout, 
-                        **httpx_kwargs)  # type: ignore[reportArgumentType]
+                        **httpx_kwargs)
                     break
                 except httpx.ConnectError: pass
             if i + 1 == max_reconnections:
                 raise ConnectionError(
                     f'Service {service} did not respond {max_reconnections} times (timeout {timeout})'
                     )
-                
+              
         if (httpx_response.status_code == ErrorCode.JWT_EXPIRED
             or httpx_response.status_code == ErrorCode.JWT_INVALID):
             await self.get_tokens()
@@ -196,7 +191,7 @@ class SelfAsyncService:
         if use_cache:
             cache_value = await self.cache.get(url)
             if cache_value: 
-                return Response(**self.bytes_to_dict(cache_value))  # type: ignore[reportCallIssue]
+                return Response(**self.bytes_to_dict(cache_value))
         
         response = await self._request(
             service=service, url=url, method='GET',

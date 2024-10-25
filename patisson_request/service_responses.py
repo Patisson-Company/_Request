@@ -1,4 +1,4 @@
-from typing import Generic, List, Optional, TypeAlias, TypeVar
+from typing import Generic, List, Optional, TypeAlias, TypeVar, Union
 
 from pydantic import BaseModel
 from patisson_request.errors import ErrorSchema
@@ -7,7 +7,13 @@ from patisson_request.graphql.models import books_model as BooksGQL
 from patisson_request.graphql.models import users_models as UsersGQL
 
 
-GraphqlResponseType = TypeVar("GraphqlResponseType")
+GraphqlResponseType = TypeVar("GraphqlResponseType", bound=Union[
+    '_GQLResponseFields.BooksService.books', '_GQLResponseFields.BooksService.booksDeep', 
+    '_GQLResponseFields.BooksService.authors', '_GQLResponseFields.BooksService.categories', 
+    '_GQLResponseFields.BooksService.reviews', '_GQLResponseFields.BooksService.reviewsDeep',
+    '_GQLResponseFields.BooksService.createReview', '_GQLResponseFields.BooksService.updateReview',
+    '_GQLResponseFields.BooksService.deleteReview']
+                              )
 
 class _GQLResponseFields:
     

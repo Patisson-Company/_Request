@@ -73,7 +73,7 @@ class QUser:
 def build_query(type: str, name: str, args: Sequence[Optional[str]], 
                 fields: Sequence[GraphqlField | NestedGraphqlFields]) -> str:
     query_args = ', '.join(filter(None, args))
-    return f'{type} {{ {name}({query_args}) {{ {build_query_fields(fields)} }} }}'
+    return f'{type} {{ {name}{'(' + query_args+ ')' if query_args != "" else ""} {{ {build_query_fields(fields)} }} }}'
 
 def build_query_fields(fields: Sequence[GraphqlField | NestedGraphqlFields]) -> str:
     query = ''

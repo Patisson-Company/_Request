@@ -24,7 +24,7 @@ class HttpxPostData(BaseModel):
     
     def model_dump(self, *args, **kwargs):
         kwargs.setdefault('by_alias', True)
-        return super().dict(*args, **kwargs)
+        return super().model_dump(*args, **kwargs)
     
     
 class BaseRequest(BaseModel, Generic[ResponseType]):

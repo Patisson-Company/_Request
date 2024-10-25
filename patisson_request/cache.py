@@ -43,8 +43,14 @@ class RedisAsyncCache(BaseAsyncTTLCache):
         
     async def set(self, key: str, value: Encodable, 
             time: Optional[Seconds | timedelta] = None) -> None:
-        await self.redis.set(name=key, value=value, 
-                             ex=time if time else self.default_cache_lifetime)
+        try:
+            await self.redis.set(name=key, value=value, 
+                                ex=time if time else self.default_cache_lifetime)
+        except:
+            ...
 
     async def get(self, key: str) -> bytes | None:
-        return await self.redis.get(name=key)
+        try:
+            return await self.redis.get(name=key)
+        except:
+            ...

@@ -1,14 +1,9 @@
 from abc import ABC
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Union
 
-__all__ = [
-    'ClientRole',
-    'ServiceRole'
-]
-
-PERMISSIONS = TypeVar("PERMISSIONS")
+PERMISSIONS = TypeVar("PERMISSIONS", bound=Union['ServicePermissions', 'ClientPermissions'])
 
 
 # Permissions
