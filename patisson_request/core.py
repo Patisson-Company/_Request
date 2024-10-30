@@ -1,14 +1,17 @@
 import asyncio
 import json
+import time
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Any, Generic, NoReturn, Optional, Sequence
+from typing import Any, Generic, Literal, NoReturn, Optional, Sequence
 
 import httpx
 from pydantic import BaseModel
 
+from patisson_request import jwt_tokens
 from patisson_request.cache import BaseAsyncTTLCache, RedisAsyncCache
 from patisson_request.errors import ErrorCode
+from patisson_request.jwt_tokens import ServiceAccessTokenPayload
 from patisson_request.service_responses import (ErrorBodyResponse_4xx,
                                                 ErrorBodyResponse_5xx,
                                                 ResponseType)
@@ -17,12 +20,13 @@ from patisson_request.services import Service
 from patisson_request.types import *
 
 
-class Response( BaseModel, Generic[ResponseType]):
+class UnauthorizedServiceError(BaseException): ...
+
+class Response(BaseModel, Generic[ResponseType]):
     status_code: int
     headers: dict[str, str]
     is_error: bool
     body: ResponseType
-
 
 @dataclass
 class SelfAsyncService:
@@ -61,6 +65,11 @@ class SelfAsyncService:
     def bytes_to_dict(bytes_: bytes) -> dict:
         return json.loads(bytes_)
     
+    def extract_token_from_header(self, header: str, header_format: Optional[str] = None) -> str:
+        if not header_format: header_format = self.default_header_auth_format
+        header_format_ = header_format.replace('{}', '').strip()
+        return header.replace(header_format_, '')
+        
     async def get_tokens_by_login(self) -> None:
         response = await self.post_request(
             *-RouteAuthentication.api.v1.service.jwt.create(
@@ -90,6 +99,32 @@ class SelfAsyncService:
             await self.get_tokens()
             await asyncio.sleep(self.update_tokens_time)
             
+            
+    async def service_verify(self, service_access_token: str, 
+                             service: Optional[Service] = None) -> (
+                                Literal[False] 
+                                | ServiceAccessTokenPayload):
+        cache_value = await self.cache.get(service_access_token)
+        if cache_value:
+            return ServiceAccessTokenPayload(**self.bytes_to_dict(cache_value))
+        elif cache_value is bytes(False):
+            return False
+        else:  # cache_value is None
+            response = await self.post_request(
+                *-RouteAuthentication.api.v1.service.jwt.verify(service_access_token)
+            )
+            payload = response.body.payload  # type: ignore[reportAssignmentType]
+            if not response.body.is_verify:
+                await self.cache.set(service_access_token, bytes(False))
+                return False
+            payload: jwt_tokens.ServiceAccessTokenPayload
+            if service is not None and Service(payload.sub).value != service.value:
+                await self.cache.set(service_access_token, bytes(False))
+                return False
+            await self.cache.set(service_access_token, self.dict_to_bytes(response.body.model_dump()), 
+                                 payload.exp - int(time.time()))
+            return payload
+                
     
     def get_url(self, service: Service, path: Path, host: Optional[str] = None,
                  protocol: Optional[str] = None) -> URL:
@@ -127,12 +162,29 @@ class SelfAsyncService:
                     httpx_response = await client.request(
                         method, url, headers=headers, timeout=timeout, 
                         **httpx_kwargs)
+                    
+                    if service == Service.AUTHENTICATION: break
+                    response_access_token = self.extract_token_from_header(
+                        httpx_response.headers['Authorization']
+                        )
+                    is_verify = await self.service_verify(response_access_token, service)
+                    if not is_verify:
+                        raise UnauthorizedServiceError                            
                     break
-                except httpx.ConnectError: pass
+                
+                except httpx.ConnectError: 
+                    ...
+                
+                except KeyError:  # httpx_response.headers['Authorization']
+                    ...
+                
+                except UnauthorizedServiceError:
+                    ...
+                    
             if i + 1 == max_reconnections:
                 raise ConnectionError(
                     f'Service {service} did not respond {max_reconnections} times (timeout {timeout})'
-                    )
+                    )            
               
         if (httpx_response.status_code == ErrorCode.JWT_EXPIRED
             or httpx_response.status_code == ErrorCode.JWT_INVALID):
@@ -171,7 +223,6 @@ class SelfAsyncService:
                     **json.loads(httpx_response.text)
                 )
             )
-            
         return response  # type: ignore[reportReturnType]
 
     

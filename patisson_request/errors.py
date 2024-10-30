@@ -35,3 +35,9 @@ class ErrorSchema(BaseModel):
 class ValidateError(Exception): ...
 
 class UniquenessError(Exception): ...
+
+class InvalidJWT(Exception): 
+    
+    def __init__(self, error: ErrorSchema) -> None:
+        super().__init__()
+        self.error_schema = error

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Generic, TypeVar, Union
 
-PERMISSIONS = TypeVar("PERMISSIONS", bound=Union['ServicePermissions', 'ClientPermissions'])
+Permissions = TypeVar("Permissions", bound=Union['ServicePermissions', 'ClientPermissions'])
 
 
 # Permissions
@@ -20,14 +20,14 @@ class ClientPermissions:
 
 # Role
     
-class Role(Generic[PERMISSIONS]):
+class Role(Generic[Permissions]):
 
-    def __init__(self, name: str, permissions: PERMISSIONS):
+    def __init__(self, name: str, permissions: Permissions):
         self.__name = name
         self.__permissions = permissions
         
     @cached_property
-    def permissions(self) -> PERMISSIONS:
+    def permissions(self) -> Permissions:
         return self.__permissions
     
     @cached_property
@@ -43,9 +43,9 @@ class Role(Generic[PERMISSIONS]):
     
 # EntityRoles
 
-class _EntityRoles(ABC, Generic[PERMISSIONS]):
+class _EntityRoles(ABC, Generic[Permissions]):
     
-    def __call__(self, role: str) -> Role[PERMISSIONS]:
+    def __call__(self, role: str) -> Role[Permissions]:
         role_attr = getattr(self.__class__, role, None)
         if role_attr is None:
             raise ValueError('incorrect role name')

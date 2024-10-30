@@ -12,8 +12,10 @@ GraphqlResponseType = TypeVar("GraphqlResponseType", bound=Union[
     '_GQLResponseFields.BooksService.authors', '_GQLResponseFields.BooksService.categories', 
     '_GQLResponseFields.BooksService.reviews', '_GQLResponseFields.BooksService.reviewsDeep',
     '_GQLResponseFields.BooksService.createReview', '_GQLResponseFields.BooksService.updateReview',
-    '_GQLResponseFields.BooksService.deleteReview']
-                              )
+    '_GQLResponseFields.BooksService.deleteReview'])
+
+AccessTokenPayloadType = TypeVar("AccessTokenPayloadType", bound=Union[
+    jwt_tokens.ClientAccessTokenPayload, jwt_tokens.ServiceAccessTokenPayload])
 
 class _GQLResponseFields:
     
@@ -70,6 +72,10 @@ class AuthenticationResponse:
         access_token: str
         refresh_token: str
 
+    class Verify(BaseModel, Generic[AccessTokenPayloadType]):
+        is_verify: bool
+        payload: Optional[AccessTokenPayloadType]
+        error: Optional[ErrorSchema] = None
 
 class BooksResponse:
         
@@ -104,8 +110,9 @@ class BooksResponse:
 ResponseBody: TypeAlias = (
     ErrorBodyResponse_4xx | ErrorBodyResponse_5xx
     | HealthCheckBodyResponse | GraphqlResponse
-    | jwt_tokens.ClientPayload | jwt_tokens.ServicePayload
-    | jwt_tokens.RefreshPayload | AuthenticationResponse.TokensSet   
+    | jwt_tokens.RefreshTokenPayload 
+    | AuthenticationResponse.Verify 
+    | AuthenticationResponse.TokensSet   
 )
 
 ResponseType = TypeVar("ResponseType", bound=ResponseBody)

@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from patisson_request import jwt_tokens
 from patisson_request.graphql.queries import build_query, format_strings
-from patisson_request.roles import ClientPermissions, ClientRole, Role
+from patisson_request.roles import ClientPermissions, Role
 from patisson_request.service_responses import (AuthenticationResponse,
                                                 BooksResponse,
                                                 HealthCheckBodyResponse,
@@ -117,7 +117,9 @@ class RouteAuthentication:
                     
                     @staticmethod
                     def verify(client_access_token: Token
-                            ) -> PostRequest[jwt_tokens.ClientPayload]:
+                            ) -> PostRequest[
+                                AuthenticationResponse.Verify[
+                                    jwt_tokens.ClientAccessTokenPayload]]:
                         path = 'api/v1/client/jwt/verify'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -126,7 +128,7 @@ class RouteAuthentication:
                                 json=AuthenticationRequestBodies.VerifyRequest(
                                     access_token=client_access_token
                                 )),
-                            response_type=jwt_tokens.ClientPayload
+                            response_type=AuthenticationResponse.Verify
                         )
                     
                     @staticmethod
@@ -167,7 +169,9 @@ class RouteAuthentication:
                     
                     @staticmethod
                     def verify(verified_service_jwt: Token
-                            ) -> PostRequest[jwt_tokens.ServicePayload]:
+                            ) -> PostRequest[
+                                AuthenticationResponse.Verify[
+                                    jwt_tokens.ServiceAccessTokenPayload]]:
                         path = 'api/v1/service/jwt/verify'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -176,7 +180,7 @@ class RouteAuthentication:
                                 json=AuthenticationRequestBodies.VerifyRequest(
                                     access_token=verified_service_jwt
                                 )),
-                            response_type=jwt_tokens.ServicePayload
+                            response_type=AuthenticationResponse.Verify
                         )
                     
                     @staticmethod
