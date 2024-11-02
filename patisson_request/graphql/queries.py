@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence, Union
+from typing import Optional, Sequence
 from patisson_request.graphql.models.books_model import *
 from patisson_request.graphql.models.users_models import *
 from patisson_request.types import *
