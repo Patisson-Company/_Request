@@ -6,12 +6,13 @@ from datetime import timedelta
 from typing import Any, Generic, Literal, NoReturn, Optional, Sequence
 
 import httpx
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from pydantic import BaseModel
 
 from patisson_request import jwt_tokens
 from patisson_request.cache import BaseAsyncTTLCache, RedisAsyncCache
 from patisson_request.errors import ErrorCode
-from patisson_request.jwt_tokens import ServiceAccessTokenPayload
+from patisson_request.jwt_tokens import ClientAccessTokenPayload, ServiceAccessTokenPayload, TokenBearer
 from patisson_request.service_responses import (ErrorBodyResponse_4xx,
                                                 ErrorBodyResponse_5xx,
                                                 ResponseType)
@@ -47,11 +48,14 @@ class SelfAsyncService:
     default_use_auth_token: bool = True
     default_header_auth_format: str = 'Bearer {}'
     default_use_cache: bool = True
+    use_telemetry: bool = True
     
     def __post_init__(self) -> None:
         if self.self_service in self.external_services:
             raise RuntimeError(f'The current service {self.self_service} is in the list of external services')
         self.cache = self.cache_type(service=self.self_service, **self.cache_kwargs)
+        if self.use_telemetry:
+            HTTPXClientInstrumentor().instrument()
     
     def activate_tokens_update_task(self):
         loop = asyncio.get_event_loop()
@@ -104,7 +108,7 @@ class SelfAsyncService:
                              service: Optional[Service] = None) -> (
                                 Literal[False] 
                                 | ServiceAccessTokenPayload):
-        cache_value = await self.cache.get(service_access_token)
+        cache_value = await self.cache.get(service_access_token + TokenBearer.SERVICE.value)
         if cache_value:
             return ServiceAccessTokenPayload(**self.bytes_to_dict(cache_value))
         elif cache_value is bytes(False):
@@ -115,16 +119,39 @@ class SelfAsyncService:
             )
             payload = response.body.payload  # type: ignore[reportAssignmentType]
             if not response.body.is_verify:
-                await self.cache.set(service_access_token, bytes(False))
+                await self.cache.set(service_access_token + TokenBearer.SERVICE.value, bytes(False))
                 return False
             payload: jwt_tokens.ServiceAccessTokenPayload
             if service is not None and Service(payload.sub).value != service.value:
-                await self.cache.set(service_access_token, bytes(False))
+                await self.cache.set(service_access_token + TokenBearer.SERVICE.value, bytes(False))
                 return False
-            await self.cache.set(service_access_token, self.dict_to_bytes(response.body.model_dump()), 
+            await self.cache.set(service_access_token + TokenBearer.SERVICE.value, 
+                                 self.dict_to_bytes(response.body.model_dump()), 
                                  payload.exp - int(time.time()))
             return payload
-                
+        
+    
+    async def client_verify(self, client_access_token: str) -> (
+        Literal[False] | ClientAccessTokenPayload
+    ):
+        cache_value = await self.cache.get(client_access_token + TokenBearer.CLIENT.value)
+        if cache_value:
+            return ClientAccessTokenPayload(**self.bytes_to_dict(cache_value))
+        elif cache_value is bytes(False):
+            return False
+        else:  # cache_value is None
+            response = await self.post_request(
+                *-RouteAuthentication.api.v1.client.jwt.verify(client_access_token)
+            )
+            payload = response.body.payload  # type: ignore[reportAssignmentType]
+            if not response.body.is_verify:
+                await self.cache.set(client_access_token + TokenBearer.CLIENT.value, bytes(False))
+                return False
+            payload: jwt_tokens.ClientAccessTokenPayload
+            await self.cache.set(client_access_token + TokenBearer.CLIENT.value, 
+                                 self.dict_to_bytes(response.body.model_dump()), 
+                                 payload.exp - int(time.time()))
+            return payload
     
     def get_url(self, service: Service, path: Path, host: Optional[str] = None,
                  protocol: Optional[str] = None) -> URL:
@@ -223,6 +250,7 @@ class SelfAsyncService:
                     **json.loads(httpx_response.text)
                 )
             )
+        print(response)
         return response  # type: ignore[reportReturnType]
 
     
