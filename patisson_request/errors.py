@@ -1,19 +1,14 @@
-from pydantic import BaseModel
 from enum import Enum
 from typing import Optional
 
-__all__ = [
-    'ErrorCode',
-    'ErrorSchema',
-    'ValidateError',
-    'UniquenessError'    
-]
+from pydantic import BaseModel
+
 
 class ErrorCode(Enum):
     INVALID_PARAMETERS = 'the passed parameters are not correct'
     BAD_CREDENTIALS = 'invalid credentials'
+    VALIDATE_ERROR = 'validation error'
     
-    # auth
     ACCESS_ERROR = 'there is no permission for this call'
     JWT_INVALID = 'invalid jwt'
     JWT_EXPIRED = 'jwt has expired'
@@ -41,3 +36,5 @@ class InvalidJWT(Exception):
     def __init__(self, error: ErrorSchema) -> None:
         super().__init__()
         self.error_schema = error
+        
+class UnauthorizedServiceError(Exception): ...

@@ -66,11 +66,12 @@ class HealthCheckBodyResponse(BaseModel):
     error: Optional[str] = None
 
 
-class AuthenticationResponse:
-    
-    class TokensSet(BaseModel):
+class TokensSet(BaseModel):
         access_token: str
         refresh_token: str
+
+
+class AuthenticationResponse:
 
     class Verify(BaseModel, Generic[AccessTokenPayloadType]):
         is_verify: bool
@@ -112,7 +113,7 @@ ResponseBody: TypeAlias = (
     | HealthCheckBodyResponse | GraphqlResponse
     | jwt_tokens.RefreshTokenPayload 
     | AuthenticationResponse.Verify 
-    | AuthenticationResponse.TokensSet   
+    | TokensSet   
 )
 
 ResponseType = TypeVar("ResponseType", bound=ResponseBody)

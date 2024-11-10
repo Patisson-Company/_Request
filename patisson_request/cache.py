@@ -1,13 +1,12 @@
 import abc
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import  Optional
+from typing import Optional
 
 import redis.asyncio as aioredis
 
-from patisson_request.types import *
 from patisson_request.services import Service
-
+from patisson_request.types import Encodable, Seconds
 
 REDIS_DB_BY_SERVICE = {
     Service.AUTHENTICATION: 0,

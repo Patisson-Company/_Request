@@ -1,9 +1,12 @@
+from functools import wraps
 from typing import Awaitable, Callable
+
 from opentelemetry.trace import Tracer
 
 from patisson_request.core import SelfAsyncService
 from patisson_request.errors import ErrorCode, ErrorSchema, InvalidJWT
-from patisson_request.jwt_tokens import ClientAccessTokenPayload, ServiceAccessTokenPayload
+from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
+                                         ServiceAccessTokenPayload)
 from patisson_request.types import Token
 
 
@@ -19,6 +22,7 @@ async def verify_service_token_dep(self_service: SelfAsyncService, access_token:
 
 def dep_jaeger_service_decorator(tracer: Tracer):
     def decorator(func: Callable[..., Awaitable[ServiceAccessTokenPayload]]):
+        @wraps(func)
         async def wrapper(*args, **kwargs):
             with tracer.start_as_current_span("verify-service-token") as span:
                 token = await func(*args, **kwargs)
@@ -45,6 +49,7 @@ async def verify_client_token_dep(self_service: SelfAsyncService, access_token: 
 
 def dep_jaeger_client_decorator(tracer: Tracer):
     def decorator(func: Callable[..., Awaitable[ClientAccessTokenPayload]]):
+        @wraps(func)
         async def wrapper(*args, **kwargs):
             with tracer.start_as_current_span("verify-client-token") as span:
                 token = await func(*args, **kwargs)

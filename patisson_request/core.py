@@ -3,7 +3,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Any, Generic, Literal, NoReturn, Optional, Sequence
+from typing import Any, Generic, Literal, Mapping, NoReturn, Optional, Sequence
 
 import httpx
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
@@ -11,17 +11,17 @@ from pydantic import BaseModel
 
 from patisson_request import jwt_tokens
 from patisson_request.cache import BaseAsyncTTLCache, RedisAsyncCache
-from patisson_request.errors import ErrorCode
-from patisson_request.jwt_tokens import ClientAccessTokenPayload, ServiceAccessTokenPayload, TokenBearer
+from patisson_request.errors import ErrorCode, UnauthorizedServiceError
+from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
+                                         ServiceAccessTokenPayload,
+                                         TokenBearer)
 from patisson_request.service_responses import (ErrorBodyResponse_4xx,
                                                 ErrorBodyResponse_5xx,
                                                 ResponseType)
-from patisson_request.service_routes import HttpxPostData, RouteAuthentication
+from patisson_request.service_routes import AuthenticationRoute, HttpxPostData
 from patisson_request.services import Service
-from patisson_request.types import *
+from patisson_request.types import URL, HeadersType, Path, Seconds, Token
 
-
-class UnauthorizedServiceError(BaseException): ...
 
 class Response(BaseModel, Generic[ResponseType]):
     status_code: int
@@ -57,10 +57,6 @@ class SelfAsyncService:
         if self.use_telemetry:
             HTTPXClientInstrumentor().instrument()
     
-    def activate_tokens_update_task(self):
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.tokens_update_task())
-    
     @staticmethod
     def dict_to_bytes(dict_ : dict) -> bytes:
         return json.dumps(dict_).encode('utf-8')
@@ -69,6 +65,10 @@ class SelfAsyncService:
     def bytes_to_dict(bytes_: bytes) -> dict:
         return json.loads(bytes_)
     
+    def activate_tokens_update_task(self):
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.tokens_update_task())
+    
     def extract_token_from_header(self, header: str, header_format: Optional[str] = None) -> str:
         if not header_format: header_format = self.default_header_auth_format
         header_format_ = header_format.replace('{}', '').strip()
@@ -76,7 +76,7 @@ class SelfAsyncService:
         
     async def get_tokens_by_login(self) -> None:
         response = await self.post_request(
-            *-RouteAuthentication.api.v1.service.jwt.create(
+            *-AuthenticationRoute.api.v1.service.jwt.create(
                 login=self.login, password=self.password
             ), use_auth_token=False
         )
@@ -88,7 +88,7 @@ class SelfAsyncService:
     
     async def get_tokens(self) -> None:
         response = await self.post_request(
-            *-RouteAuthentication.api.v1.service.jwt.update(
+            *-AuthenticationRoute.api.v1.service.jwt.update(
                 refresh_token=self.refresh_token
             )
         )
@@ -115,7 +115,7 @@ class SelfAsyncService:
             return False
         else:  # cache_value is None
             response = await self.post_request(
-                *-RouteAuthentication.api.v1.service.jwt.verify(service_access_token)
+                *-AuthenticationRoute.api.v1.service.jwt.verify(service_access_token)
             )
             payload = response.body.payload  # type: ignore[reportAssignmentType]
             if not response.body.is_verify:
@@ -126,7 +126,7 @@ class SelfAsyncService:
                 await self.cache.set(service_access_token + TokenBearer.SERVICE.value, bytes(False))
                 return False
             await self.cache.set(service_access_token + TokenBearer.SERVICE.value, 
-                                 self.dict_to_bytes(response.body.model_dump()), 
+                                 self.dict_to_bytes(payload.model_dump()), 
                                  payload.exp - int(time.time()))
             return payload
         
@@ -141,7 +141,7 @@ class SelfAsyncService:
             return False
         else:  # cache_value is None
             response = await self.post_request(
-                *-RouteAuthentication.api.v1.client.jwt.verify(client_access_token)
+                *-AuthenticationRoute.api.v1.client.jwt.verify(client_access_token)
             )
             payload = response.body.payload  # type: ignore[reportAssignmentType]
             if not response.body.is_verify:
@@ -149,7 +149,7 @@ class SelfAsyncService:
                 return False
             payload: jwt_tokens.ClientAccessTokenPayload
             await self.cache.set(client_access_token + TokenBearer.CLIENT.value, 
-                                 self.dict_to_bytes(response.body.model_dump()), 
+                                 self.dict_to_bytes(payload.model_dump()), 
                                  payload.exp - int(time.time()))
             return payload
     
@@ -250,7 +250,6 @@ class SelfAsyncService:
                     **json.loads(httpx_response.text)
                 )
             )
-        print(response)
         return response  # type: ignore[reportReturnType]
 
     
