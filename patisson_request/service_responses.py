@@ -1,4 +1,4 @@
-from typing import Generic, List, Optional, TypeAlias, TypeVar, Union
+from typing import Generic, List, Literal, Optional, TypeAlias, TypeVar, Union
 
 from pydantic import BaseModel
 from patisson_request.errors import ErrorSchema
@@ -67,8 +67,11 @@ class HealthCheckBodyResponse(BaseModel):
 
 
 class TokensSet(BaseModel):
-        access_token: str
-        refresh_token: str
+    access_token: str
+    refresh_token: str
+
+class SuccessResponse(BaseModel):
+    succes: Literal[True] = True
 
 
 class AuthenticationResponse:
@@ -77,6 +80,7 @@ class AuthenticationResponse:
         is_verify: bool
         payload: Optional[AccessTokenPayloadType]
         error: Optional[ErrorSchema] = None
+
 
 class BooksResponse:
         
@@ -113,7 +117,7 @@ ResponseBody: TypeAlias = (
     | HealthCheckBodyResponse | GraphqlResponse
     | jwt_tokens.RefreshTokenPayload 
     | AuthenticationResponse.Verify 
-    | TokensSet   
+    | TokensSet | SuccessResponse
 )
 
 ResponseType = TypeVar("ResponseType", bound=ResponseBody)

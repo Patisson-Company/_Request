@@ -6,19 +6,16 @@ from typing import Generic, TypeVar, Union
 Permissions = TypeVar("Permissions", bound=Union['ServicePermissions', 'ClientPermissions'])
 
 
-# Permissions
-
 @dataclass(frozen=True, kw_only=True)    
 class ServicePermissions:
     users_auth: bool
+    user_reg: bool
     
-
 @dataclass(frozen=True, kw_only=True)    
 class ClientPermissions:
-    pass
+    create_lib: bool
+    create_ban: bool
 
-
-# Role
     
 class Role(Generic[Permissions]):
 
@@ -41,8 +38,6 @@ class Role(Generic[Permissions]):
         return self.name
     
     
-# EntityRoles
-
 class _EntityRoles(ABC, Generic[Permissions]):
     
     def __call__(self, role: str) -> Role[Permissions]:
@@ -59,49 +54,70 @@ class _EntityRoles(ABC, Generic[Permissions]):
         
     
 class _ServiceRole(_EntityRoles[ServicePermissions]):
+    _TEST = Role[ServicePermissions](
+        "_TEST",
+        ServicePermissions(
+            users_auth=True,
+            user_reg=True
+        )
+    )
     MINIMUM = Role[ServicePermissions](
         "MINIMUM", 
         ServicePermissions(
-            users_auth=False
+            users_auth=False,
+            user_reg=False
             )
         )
     SERVES_USERS = Role[ServicePermissions](
         "SERVES_USERS",
         ServicePermissions(
-            users_auth=True
+            users_auth=True,
+            user_reg=True
             )
         )
     AUTHENTICATION = Role[ServicePermissions](
         "AUTHENTICATION", 
         ServicePermissions(
-            users_auth=True
+            users_auth=True,
+            user_reg=False
             )
         )
     
     
-class _ClientRole(_EntityRoles[ServicePermissions]):
+class _ClientRole(_EntityRoles[ClientPermissions]):
+    _TEST = Role[ClientPermissions](
+        "_TEST",
+        ClientPermissions(
+            create_lib = True,
+            create_ban = True
+        )
+    )
     GUEST = Role[ClientPermissions](
         "GUEST",
         ClientPermissions(
-            
+            create_lib = False,
+            create_ban = False
             )
         )
     MEMBER = Role[ClientPermissions](
         "MEMBER",
         ClientPermissions(
-            
+            create_lib = True,
+            create_ban = False
             )
         )
     ADMIN = Role[ClientPermissions](
         "ADMIN",
         ClientPermissions(
-            
+            create_lib = True,
+            create_ban = True
             )
         )
     OWNER = Role[ClientPermissions](
         "OWNER",
         ClientPermissions(
-            
+            create_lib = True,
+            create_ban = True
             )
         )
 
