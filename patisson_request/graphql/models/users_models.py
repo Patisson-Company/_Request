@@ -72,4 +72,16 @@ class User(GraphQLBaseModel):
     typename__: _t.Literal["User"] = Field(default="User", alias="__typename")
 
 
+class Library(GraphQLBaseModel):
+    """
+    An Object type
+    See https://graphql.org/learn/schema/#object-types-and-fields
+    """
+    id: 'ID' = Field(default=EmptyField())
+    user_id: 'String' = Field(default=EmptyField())
+    book_id: 'String' = Field(default=EmptyField())
+    status: 'String' = Field(default=EmptyField())
+    typename__: _t.Literal["Library"] = Field(default="Library", alias="__typename")
+    
+    
 User.update_forward_refs()

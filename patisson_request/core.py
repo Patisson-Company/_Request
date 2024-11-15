@@ -18,7 +18,9 @@ from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
 from patisson_request.service_responses import (ErrorBodyResponse_4xx,
                                                 ErrorBodyResponse_5xx,
                                                 ResponseType)
-from patisson_request.service_routes import AuthenticationRoute, HttpxPostData
+from patisson_request.service_routes import (USERS_VERIFY_ROUTE,
+                                             AuthenticationRoute,
+                                             HttpxPostData)
 from patisson_request.services import Service
 from patisson_request.types import URL, HeadersType, Path, Seconds, Token
 
@@ -48,6 +50,7 @@ class SelfAsyncService:
     default_use_auth_token: bool = True
     default_header_auth_format: str = 'Bearer {}'
     default_use_cache: bool = True
+    default_users_auth_service: Service = Service.USERS
     use_telemetry: bool = True
     
     def __post_init__(self) -> None:
@@ -131,9 +134,11 @@ class SelfAsyncService:
             return payload
         
     
-    async def client_verify(self, client_access_token: str) -> (
-        Literal[False] | ClientAccessTokenPayload
-    ):
+    async def client_verify(self, client_access_token: str,
+        users_auth_service: Optional[Service] = None) -> (
+        Literal[False] | ClientAccessTokenPayload):
+        if not users_auth_service: users_auth_service = self.default_users_auth_service
+        
         cache_value = await self.cache.get(client_access_token + TokenBearer.CLIENT.value)
         if cache_value:
             return ClientAccessTokenPayload(**self.bytes_to_dict(cache_value))
@@ -141,7 +146,7 @@ class SelfAsyncService:
             return False
         else:  # cache_value is None
             response = await self.post_request(
-                *-AuthenticationRoute.api.v1.client.jwt.verify(client_access_token)
+                *-USERS_VERIFY_ROUTE[users_auth_service](client_access_token)
             )
             payload = response.body.payload  # type: ignore[reportAssignmentType]
             if not response.body.is_verify:
@@ -167,6 +172,9 @@ class SelfAsyncService:
         max_reconnections: Optional[int] = None, timeout: Optional[float] = None, 
         use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None,
         **httpx_kwargs) -> Response[ResponseType]:
+        
+        if service == self.self_service:
+            raise RuntimeError(f'Services cannot make requests to themselves')
         
         timeout = self.default_timeout if timeout is None else timeout
         max_reconnections = (self.default_max_reconnections if max_reconnections is None

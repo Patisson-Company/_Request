@@ -9,9 +9,13 @@ from patisson_request.services import Service
 from patisson_request.types import Encodable, Seconds
 
 REDIS_DB_BY_SERVICE = {
-    Service.AUTHENTICATION: 0,
-    Service.BOOKS: 1,
-    Service.USERS: 2
+    Service._TEST: 0,
+    Service.AUTHENTICATION: 1,
+    Service.BOOKS: 2,
+    Service.USERS: 3,
+    Service.FORUM: 4,
+    Service.INTERNAL_MEDIA: 5,
+    Service.API_GATEWAY: 6
 }
 
 @dataclass(kw_only=True)

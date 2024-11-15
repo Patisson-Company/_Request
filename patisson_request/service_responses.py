@@ -1,18 +1,19 @@
 from typing import Generic, List, Literal, Optional, TypeAlias, TypeVar, Union
 
 from pydantic import BaseModel
-from patisson_request.errors import ErrorSchema
+
 from patisson_request import jwt_tokens
+from patisson_request.errors import ErrorSchema
 from patisson_request.graphql.models import books_model as BooksGQL
 from patisson_request.graphql.models import users_models as UsersGQL
-
 
 GraphqlResponseType = TypeVar("GraphqlResponseType", bound=Union[
     '_GQLResponseFields.BooksService.books', '_GQLResponseFields.BooksService.booksDeep', 
     '_GQLResponseFields.BooksService.authors', '_GQLResponseFields.BooksService.categories', 
     '_GQLResponseFields.BooksService.reviews', '_GQLResponseFields.BooksService.reviewsDeep',
     '_GQLResponseFields.BooksService.createReview', '_GQLResponseFields.BooksService.updateReview',
-    '_GQLResponseFields.BooksService.deleteReview'])
+    '_GQLResponseFields.BooksService.deleteReview', '_GQLResponseFields.UsersService.users',
+    '_GQLResponseFields.UsersService.libraries'])
 
 AccessTokenPayloadType = TypeVar("AccessTokenPayloadType", bound=Union[
     jwt_tokens.ClientAccessTokenPayload, jwt_tokens.ServiceAccessTokenPayload])
@@ -47,6 +48,15 @@ class _GQLResponseFields:
         
         class deleteReview(BaseModel):
             reviews: BooksGQL.ReviewResponse
+            
+    
+    class UsersService:
+        
+        class users(BaseModel):
+            users: List[UsersGQL.User]
+            
+        class libraries(BaseModel):
+            libraries: List[UsersGQL.Library]
 
 
 class GraphqlResponse(BaseModel, Generic[GraphqlResponseType]):
@@ -72,7 +82,11 @@ class TokensSet(BaseModel):
 
 class SuccessResponse(BaseModel):
     succes: Literal[True] = True
-
+    
+class VerifyUser(BaseModel):
+    is_verify: bool
+    payload: Optional[object]
+    error: Optional[object] = None
 
 class AuthenticationResponse:
 
@@ -110,14 +124,23 @@ class BooksResponse:
     
     class GdeleteReview(GraphqlResponse[_GQLResponseFields.BooksService.deleteReview]):
         ''''''
+        
 
+class UsersResponse:
+    
+    class Gusers(GraphqlResponse[_GQLResponseFields.UsersService.users]):
+        ''''''
+        
+    class Glibraries(GraphqlResponse[_GQLResponseFields.UsersService.libraries]):
+        ''''''
+        
 
 ResponseBody: TypeAlias = (
     ErrorBodyResponse_4xx | ErrorBodyResponse_5xx
     | HealthCheckBodyResponse | GraphqlResponse
     | jwt_tokens.RefreshTokenPayload 
     | AuthenticationResponse.Verify 
-    | TokensSet | SuccessResponse
+    | TokensSet | SuccessResponse | VerifyUser
 )
 
 ResponseType = TypeVar("ResponseType", bound=ResponseBody)

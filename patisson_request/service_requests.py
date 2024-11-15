@@ -50,3 +50,9 @@ class UsersRequest:
         reason: int
         comment: str 
         end_date: datetime
+        
+    class VerifyUser(BaseModel):
+        access_token: str
+        
+    class UpdateUser(BaseModel):
+        refresh_token: str

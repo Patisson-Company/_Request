@@ -1,15 +1,18 @@
-from typing import Any, Generic, List, Optional, Sequence, Union
+from datetime import datetime
+from typing import Any, Callable, Generic, List, Optional, Sequence, Union
 
 from pydantic import BaseModel, Field
 
 from patisson_request import jwt_tokens
 from patisson_request.graphql.queries import build_query, format_strings
 from patisson_request.roles import ClientPermissions, Role
-from patisson_request.service_requests import AuthenticationRequest
+from patisson_request.service_requests import (AuthenticationRequest,
+                                               UsersRequest)
 from patisson_request.service_responses import (AuthenticationResponse,
                                                 BooksResponse,
                                                 HealthCheckBodyResponse,
-                                                ResponseType, TokensSet)
+                                                ResponseType, SuccessResponse,
+                                                TokensSet, UsersResponse, VerifyUser)
 from patisson_request.services import Service
 from patisson_request.types import (GraphqlField, NestedGraphqlFields, Path,
                                     RequestContent, RequestData, RequestFiles,
@@ -461,3 +464,170 @@ class BooksRoute:
                     json={'query': build_query(type='mutation', name='deleteReview', args=args, fields=fields)}
                 )
             )
+
+
+class UsersRoute:
+    
+    @staticmethod
+    def health() -> GetRequest[HealthCheckBodyResponse]:
+        return GetRequest(
+            service=Service.BOOKS,
+            path='health',
+            response_type=HealthCheckBodyResponse
+        )
+    
+    class graphql:
+
+        @staticmethod
+        def users(
+            fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
+            ids: Optional[List[str]] = None,
+            usernames: Optional[List[str]] = None,
+            first_names: Optional[List[str]] = None,
+            last_names: Optional[List[str]] = None,
+            roles: Optional[List[str]] = None,
+            is_banned: Optional[bool] = None,
+            offset: Optional[int] = None,
+            limit: Optional[int] = None
+        ) -> PostRequest[UsersResponse.Gusers]:
+            args = [
+                f'ids: {format_strings(ids)}' if ids is not None else None,
+                f'usernames: {format_strings(usernames)}' if usernames is not None else None,
+                f'first_names: {format_strings(first_names)}' if first_names is not None else None,
+                f'last_names: {format_strings(last_names)}' if last_names is not None else None,
+                f'roles: {format_strings(roles)}' if roles is not None else None,
+                f'is_banned: {str(is_banned).lower()}' if is_banned is not None else None,
+                f'offset: {offset}' if offset is not None else None,
+                f'limit: {limit}' if limit is not None else None,
+            ]
+            return PostRequest(
+                service=Service.USERS,
+                path='graphql',
+                response_type=UsersResponse.Gusers,
+                post_data=HttpxPostData(
+                    json={'query': build_query(type='query', name='users', args=args, fields=fields)}
+                    )
+            )
+            
+        @staticmethod
+        def libraries(
+            fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
+            ids: Optional[List[str]] = None,
+            user_ids: Optional[List[str]] = None,
+            book_ids: Optional[List[str]] = None,
+            statuses: Optional[List[str]] = None
+        ) -> PostRequest[UsersResponse.Glibraries]:
+            args = [
+                f'ids: {format_strings(ids)}' if ids is not None else None,
+                f'user_ids: {format_strings(user_ids)}' if user_ids is not None else None,
+                f'book_ids: {format_strings(book_ids)}' if book_ids is not None else None,
+                f'statuses: {format_strings(statuses)}' if statuses is not None else None,
+            ]
+            return PostRequest(
+                service=Service.USERS,
+                path='graphql',
+                response_type=UsersResponse.Glibraries,
+                post_data=HttpxPostData(
+                    json={'query': build_query(type='query', name='libraries', args=args, fields=fields)}
+                )
+            )
+            
+    @staticmethod
+    def create_user(
+        username: str, password: str,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        avatar: Optional[str] = None,
+        about: Optional[str] = None,
+        expire_in: Optional[Seconds] = None
+        ) -> PostRequest[TokensSet]:
+        path = 'api/v1/create-user'
+        return PostRequest(
+            service=Service.USERS,
+            path=path,
+            post_data=HttpxPostData(
+                json=UsersRequest.CreateUser(
+                    username=username,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    avatar=avatar,
+                    about=about,
+                    expire_in=expire_in
+                )),
+            response_type=TokensSet
+        )
+        
+    @staticmethod
+    def create_library(
+        book_id: str, user_id: str, status: int
+        ) -> PostRequest[SuccessResponse]:
+        path = 'api/v1/create-library'
+        return PostRequest(
+            service=Service.USERS,
+            path=path,
+            post_data=HttpxPostData(
+                json=UsersRequest.CreateLibrary(
+                    book_id=book_id,
+                    user_id=user_id,
+                    status=status
+                )),
+            response_type=SuccessResponse
+        )
+        
+    @staticmethod
+    def create_ban(
+        user_id: str, reason: int, 
+        comment: str, end_date: datetime
+        ) -> PostRequest[SuccessResponse]:
+        path = 'api/v1/create-ban'
+        return PostRequest(
+            service=Service.USERS,
+            path=path,
+            post_data=HttpxPostData(
+                json=UsersRequest.CreateBan(
+                    user_id=user_id,
+                    reason=reason,
+                    comment=comment,
+                    end_date=end_date,
+                )),
+            response_type=SuccessResponse
+        )
+        
+    @staticmethod
+    def verify_user(
+        access_token: str
+    ) -> PostRequest[VerifyUser]:
+        path = 'api/v1/verify-user'
+        return PostRequest(
+            service=Service.USERS,
+            path=path,
+            post_data=HttpxPostData(
+                json=UsersRequest.VerifyUser(
+                    access_token=access_token
+                )
+            ),
+            response_type=VerifyUser
+        )
+        
+    @staticmethod
+    def update_user(
+        refresh_token: str
+    ) -> PostRequest[TokensSet]:
+        path = 'api/v1/update-user'
+        return PostRequest(
+            service=Service.USERS,
+            path=path,
+            post_data=HttpxPostData(
+                json=UsersRequest.UpdateUser(
+                    refresh_token=refresh_token
+                )
+            ),
+            response_type=TokensSet
+        )
+        
+
+USERS_VERIFY_ROUTE: dict[
+    Service, Callable[..., PostRequest[VerifyUser]]] = {
+    Service.USERS: UsersRoute.verify_user
+}

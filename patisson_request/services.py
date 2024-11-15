@@ -1,6 +1,7 @@
 from enum import Enum
 
 class Service(Enum):
+    _TEST = '_test'
     AUTHENTICATION = 'authentication'
     BOOKS = 'books'
     USERS = "users"
