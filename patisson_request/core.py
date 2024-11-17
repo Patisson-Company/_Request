@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -52,13 +53,35 @@ class SelfAsyncService:
     default_use_cache: bool = True
     default_users_auth_service: Service = Service.USERS
     use_telemetry: bool = True
+    logger_object: Optional[logging.Logger] = None
+    logging_level: int = logging.DEBUG
     
     def __post_init__(self) -> None:
+        if not self.logger_object:
+            self.logger = logging.getLogger()
+            self.logger.addHandler(logging.NullHandler())
+        else:
+            self.logger = self.logger_object
+        self.logger.setLevel(self.logging_level)
+        
         if self.self_service in self.external_services:
             raise RuntimeError(f'The current service {self.self_service} is in the list of external services')
-        self.cache = self.cache_type(service=self.self_service, **self.cache_kwargs)
+        self.cache = self.cache_type(
+            service=self.self_service, 
+            logger=self.logger,
+            **self.cache_kwargs)
+        
         if self.use_telemetry:
             HTTPXClientInstrumentor().instrument()
+        
+        logging_msg = ''
+        secret_var = [
+            'password'
+        ]
+        for attr, value in vars(self).items():
+            if attr in secret_var: continue
+            logging_msg += f" - {attr}: {value}\n"
+        self.logger.info(f'Initialized {self.__class__}: \n{logging_msg}')
     
     @staticmethod
     def dict_to_bytes(dict_ : dict) -> bytes:
@@ -71,6 +94,7 @@ class SelfAsyncService:
     def activate_tokens_update_task(self):
         loop = asyncio.get_event_loop()
         loop.create_task(self.tokens_update_task())
+        self.logger.debug('the token update task has been started')
     
     def extract_token_from_header(self, header: str, header_format: Optional[str] = None) -> str:
         if not header_format: header_format = self.default_header_auth_format
@@ -84,9 +108,11 @@ class SelfAsyncService:
             ), use_auth_token=False
         )
         if response.is_error:
+            self.logger.critical('Failed to get a tokens by login')
             raise ConnectionError(f'failed to get jwt tokens. Response: {response}')
         self.access_token = response.body.access_token
         self.refresh_token = response.body.refresh_token
+        self.logger.info('tokens have been received by login')
         
     
     async def get_tokens(self) -> None:
@@ -96,9 +122,11 @@ class SelfAsyncService:
             )
         )
         if response.is_error:
+            self.logger.warning('Failed to get a tokens')
             return await self.get_tokens_by_login()
         self.access_token = response.body.access_token
         self.refresh_token = response.body.refresh_token
+        self.logger.info('tokens have been received')
     
     
     async def tokens_update_task(self) -> NoReturn:
@@ -115,6 +143,7 @@ class SelfAsyncService:
         if cache_value:
             return ServiceAccessTokenPayload(**self.bytes_to_dict(cache_value))
         elif cache_value is bytes(False):
+            self.logger.warning(f'service {service} has an invalid token')
             return False
         else:  # cache_value is None
             response = await self.post_request(
@@ -123,14 +152,17 @@ class SelfAsyncService:
             payload = response.body.payload  # type: ignore[reportAssignmentType]
             if not response.body.is_verify:
                 await self.cache.set(service_access_token + TokenBearer.SERVICE.value, bytes(False))
+                self.logger.warning(f'service {service} has an invalid token')
                 return False
             payload: jwt_tokens.ServiceAccessTokenPayload
             if service is not None and Service(payload.sub).value != service.value:
                 await self.cache.set(service_access_token + TokenBearer.SERVICE.value, bytes(False))
+                self.logger.critical(f'service {service} has someone elses token')
                 return False
             await self.cache.set(service_access_token + TokenBearer.SERVICE.value, 
                                  self.dict_to_bytes(payload.model_dump()), 
                                  payload.exp - int(time.time()))
+            self.logger.info(f'the service token {service} is valid')
             return payload
         
     
@@ -143,6 +175,7 @@ class SelfAsyncService:
         if cache_value:
             return ClientAccessTokenPayload(**self.bytes_to_dict(cache_value))
         elif cache_value is bytes(False):
+            self.logger.info(f'client has an invalid token')
             return False
         else:  # cache_value is None
             response = await self.post_request(
@@ -151,11 +184,13 @@ class SelfAsyncService:
             payload = response.body.payload  # type: ignore[reportAssignmentType]
             if not response.body.is_verify:
                 await self.cache.set(client_access_token + TokenBearer.CLIENT.value, bytes(False))
+                self.logger.info(f'client has an invalid token')
                 return False
             payload: jwt_tokens.ClientAccessTokenPayload
             await self.cache.set(client_access_token + TokenBearer.CLIENT.value, 
                                  self.dict_to_bytes(payload.model_dump()), 
                                  payload.exp - int(time.time()))
+            self.logger.info(f'the client token is valid')
             return payload
     
     def get_url(self, service: Service, path: Path, host: Optional[str] = None,
@@ -174,7 +209,8 @@ class SelfAsyncService:
         **httpx_kwargs) -> Response[ResponseType]:
         
         if service == self.self_service:
-            raise RuntimeError(f'Services cannot make requests to themselves')
+            self.logger.critical('Services cannot make requests to themselves')
+            raise RuntimeError('Services cannot make requests to themselves')
         
         timeout = self.default_timeout if timeout is None else timeout
         max_reconnections = (self.default_max_reconnections if max_reconnections is None
@@ -208,18 +244,18 @@ class SelfAsyncService:
                     break
                 
                 except httpx.ConnectError: 
-                    ...
+                    self.logger.warning(f'service {service} did not respond')
                 
                 except KeyError:  # httpx_response.headers['Authorization']
-                    ...
+                    self.logger.warning(f'service {service} does not have an authorization header')
                 
                 except UnauthorizedServiceError:
-                    ...
+                    self.logger.warning(f'service {service} has an invalid token')
                     
             if i + 1 == max_reconnections:
-                raise ConnectionError(
-                    f'Service {service} did not respond {max_reconnections} times (timeout {timeout})'
-                    )            
+                msg = f'Service {service} did not respond {max_reconnections} times (timeout {timeout})'
+                self.logger.critical(msg)
+                raise ConnectionError(msg)  
               
         if (httpx_response.status_code == ErrorCode.JWT_EXPIRED
             or httpx_response.status_code == ErrorCode.JWT_INVALID):
@@ -258,6 +294,7 @@ class SelfAsyncService:
                     **json.loads(httpx_response.text)
                 )
             )
+        self.logger.info(f'request: {method} {url}, response: {response.status_code}')
         return response  # type: ignore[reportReturnType]
 
     

@@ -12,7 +12,7 @@ from patisson_request.service_responses import (AuthenticationResponse,
                                                 BooksResponse,
                                                 HealthCheckBodyResponse,
                                                 ResponseType, SuccessResponse,
-                                                TokensSet, UsersResponse, VerifyUser)
+                                                TokensSetResponse, UsersResponse, VerifyUserResponse)
 from patisson_request.services import Service
 from patisson_request.types import (GraphqlField, NestedGraphqlFields, Path,
                                     RequestContent, RequestData, RequestFiles,
@@ -77,7 +77,7 @@ class AuthenticationRoute:
                     @staticmethod
                     def create(client_id: str, client_role: Role[ClientPermissions],
                             expire_in: Optional[Seconds] = None
-                            ) -> PostRequest[TokensSet]:
+                            ) -> PostRequest[TokensSetResponse]:
                         path = 'api/v1/client/jwt/create'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -88,7 +88,7 @@ class AuthenticationRoute:
                                     client_role=client_role.name,
                                     expire_in=expire_in
                                 )),
-                            response_type=TokensSet
+                            response_type=TokensSetResponse
                         )
                     
                     @staticmethod
@@ -111,7 +111,7 @@ class AuthenticationRoute:
                     def update(client_access_token: Token,
                             client_refresh_token: Token,
                             expire_in: Optional[Seconds] = None
-                            ) -> PostRequest[TokensSet]:
+                            ) -> PostRequest[TokensSetResponse]:
                         path = 'api/v1/client/jwt/update'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -122,7 +122,7 @@ class AuthenticationRoute:
                                     client_refresh_token=client_refresh_token,
                                     expire_in=expire_in
                                 )),
-                            response_type=TokensSet
+                            response_type=TokensSetResponse
                         )
             
             class service: 
@@ -130,7 +130,7 @@ class AuthenticationRoute:
                     
                     @staticmethod
                     def create(login: str, password: str
-                            ) -> PostRequest[TokensSet]:
+                            ) -> PostRequest[TokensSetResponse]:
                         path = 'api/v1/service/jwt/create'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -140,7 +140,7 @@ class AuthenticationRoute:
                                     login=login,
                                     password=password
                                 )),
-                            response_type=TokensSet
+                            response_type=TokensSetResponse
                         )
                     
                     @staticmethod
@@ -161,7 +161,7 @@ class AuthenticationRoute:
                     
                     @staticmethod
                     def update(refresh_token: Token
-                            ) -> PostRequest[TokensSet]:
+                            ) -> PostRequest[TokensSetResponse]:
                         path = 'api/v1/service/jwt/update'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -170,7 +170,7 @@ class AuthenticationRoute:
                                 json=AuthenticationRequest.UpdateService(
                                     refresh_token=refresh_token
                                 )),
-                            response_type=TokensSet
+                            response_type=TokensSetResponse
                         )
 
 
@@ -540,7 +540,7 @@ class UsersRoute:
         avatar: Optional[str] = None,
         about: Optional[str] = None,
         expire_in: Optional[Seconds] = None
-        ) -> PostRequest[TokensSet]:
+        ) -> PostRequest[TokensSetResponse]:
         path = 'api/v1/create-user'
         return PostRequest(
             service=Service.USERS,
@@ -555,7 +555,7 @@ class UsersRoute:
                     about=about,
                     expire_in=expire_in
                 )),
-            response_type=TokensSet
+            response_type=TokensSetResponse
         )
         
     @staticmethod
@@ -597,7 +597,7 @@ class UsersRoute:
     @staticmethod
     def verify_user(
         access_token: str
-    ) -> PostRequest[VerifyUser]:
+    ) -> PostRequest[VerifyUserResponse]:
         path = 'api/v1/verify-user'
         return PostRequest(
             service=Service.USERS,
@@ -607,13 +607,13 @@ class UsersRoute:
                     access_token=access_token
                 )
             ),
-            response_type=VerifyUser
+            response_type=VerifyUserResponse
         )
         
     @staticmethod
     def update_user(
         refresh_token: str
-    ) -> PostRequest[TokensSet]:
+    ) -> PostRequest[TokensSetResponse]:
         path = 'api/v1/update-user'
         return PostRequest(
             service=Service.USERS,
@@ -623,11 +623,11 @@ class UsersRoute:
                     refresh_token=refresh_token
                 )
             ),
-            response_type=TokensSet
+            response_type=TokensSetResponse
         )
         
 
 USERS_VERIFY_ROUTE: dict[
-    Service, Callable[..., PostRequest[VerifyUser]]] = {
+    Service, Callable[..., PostRequest[VerifyUserResponse]]] = {
     Service.USERS: UsersRoute.verify_user
 }

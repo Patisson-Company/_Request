@@ -6,6 +6,7 @@ from patisson_request import jwt_tokens
 from patisson_request.errors import ErrorSchema
 from patisson_request.graphql.models import books_model as BooksGQL
 from patisson_request.graphql.models import users_models as UsersGQL
+from patisson_request.jwt_tokens import AccessTokenPayloadType
 
 GraphqlResponseType = TypeVar("GraphqlResponseType", bound=Union[
     '_GQLResponseFields.BooksService.books', '_GQLResponseFields.BooksService.booksDeep', 
@@ -14,9 +15,6 @@ GraphqlResponseType = TypeVar("GraphqlResponseType", bound=Union[
     '_GQLResponseFields.BooksService.createReview', '_GQLResponseFields.BooksService.updateReview',
     '_GQLResponseFields.BooksService.deleteReview', '_GQLResponseFields.UsersService.users',
     '_GQLResponseFields.UsersService.libraries'])
-
-AccessTokenPayloadType = TypeVar("AccessTokenPayloadType", bound=Union[
-    jwt_tokens.ClientAccessTokenPayload, jwt_tokens.ServiceAccessTokenPayload])
 
 class _GQLResponseFields:
     
@@ -62,28 +60,24 @@ class _GQLResponseFields:
 class GraphqlResponse(BaseModel, Generic[GraphqlResponseType]):
     data: GraphqlResponseType
 
-
 class ErrorBodyResponse_4xx(BaseModel):
     detail: list[ErrorSchema] | str
 
-
 class ErrorBodyResponse_5xx(BaseModel):
     error: str
-
 
 class HealthCheckBodyResponse(BaseModel):
     status: str
     error: Optional[str] = None
 
-
-class TokensSet(BaseModel):
+class TokensSetResponse(BaseModel):
     access_token: str
     refresh_token: str
 
 class SuccessResponse(BaseModel):
     succes: Literal[True] = True
     
-class VerifyUser(BaseModel):
+class VerifyUserResponse(BaseModel):
     is_verify: bool
     payload: Optional[object]
     error: Optional[object] = None
@@ -140,7 +134,7 @@ ResponseBody: TypeAlias = (
     | HealthCheckBodyResponse | GraphqlResponse
     | jwt_tokens.RefreshTokenPayload 
     | AuthenticationResponse.Verify 
-    | TokensSet | SuccessResponse | VerifyUser
+    | TokensSetResponse | SuccessResponse | VerifyUserResponse
 )
 
 ResponseType = TypeVar("ResponseType", bound=ResponseBody)

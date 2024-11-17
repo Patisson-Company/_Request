@@ -12,6 +12,9 @@ UserId: TypeAlias = str
 Sub = TypeVar('Sub', bound=Union[UserId, Service])
 ServiceSub = TypeVar('ServiceSub', bound=Service)
 
+AccessTokenPayloadType = TypeVar("AccessTokenPayloadType", bound=Union[
+    'ClientAccessTokenPayload', 'ServiceAccessTokenPayload'])
+
 class TokenBearer(str, Enum):  
     CLIENT = "CLIENT"
     SERVICE = "SERVICE"

@@ -1,6 +1,7 @@
 import abc
 from dataclasses import dataclass
 from datetime import timedelta
+import logging
 from typing import Optional
 
 import redis.asyncio as aioredis
@@ -21,6 +22,7 @@ REDIS_DB_BY_SERVICE = {
 @dataclass(kw_only=True)
 class BaseAsyncTTLCache(abc.ABC):
     service: Service
+    logger: logging.Logger
     default_cache_lifetime: Seconds | timedelta = 60
     
     @abc.abstractmethod
@@ -49,11 +51,11 @@ class RedisAsyncCache(BaseAsyncTTLCache):
         try:
             await self.redis.set(name=key, value=value, 
                                 ex=time if time else self.default_cache_lifetime)
-        except:
-            ...
+        except Exception as e:
+            self.logger.warning(e)
 
     async def get(self, key: str) -> bytes | None:
         try:
-            return await self.redis.get(name=key)
-        except:
-            ...
+            value = await self.redis.get(name=key)
+        except Exception as e:
+            self.logger.warning(e)
