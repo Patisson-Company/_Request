@@ -8,7 +8,7 @@ Seconds: TypeAlias = int
 HeadersType = Mapping[str, str]
 URL: TypeAlias = str
 Path: TypeAlias = str
-Token: TypeAlias = str | bytes
+Token: TypeAlias = str
 
 GraphqlField: TypeAlias = str
 NestedGraphqlFields: TypeAlias = Mapping[str, Sequence]

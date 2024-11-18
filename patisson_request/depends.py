@@ -8,13 +8,14 @@ from patisson_request.errors import ErrorCode, ErrorSchema, InvalidJWT
 from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
                                          ServiceAccessTokenPayload)
 from patisson_request.types import Token
+import logging
 
 
-async def verify_service_token_dep(self_service: SelfAsyncService, access_token: Token
-                                    ) -> ServiceAccessTokenPayload:
+async def verify_service_token_dep(self_service: SelfAsyncService, 
+                                   access_token: Token
+                                   ) -> ServiceAccessTokenPayload:
     token = await self_service.service_verify(service_access_token=str(access_token))
     if token is False:
-        ...
         raise InvalidJWT(ErrorSchema(
             error=ErrorCode.JWT_INVALID,
         ))
@@ -37,11 +38,11 @@ def dep_jaeger_service_decorator(tracer: Tracer):
     return decorator
 
 
-async def verify_client_token_dep(self_service: SelfAsyncService, access_token: Token
+async def verify_client_token_dep(self_service: SelfAsyncService, 
+                                  access_token: Token
                                   ) -> ClientAccessTokenPayload:
     token = await self_service.client_verify(client_access_token=str(access_token))
     if token is False:
-        ...
         raise InvalidJWT(ErrorSchema(
             error=ErrorCode.JWT_INVALID,
         ))

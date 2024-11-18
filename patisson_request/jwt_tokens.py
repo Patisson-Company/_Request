@@ -12,9 +12,6 @@ UserId: TypeAlias = str
 Sub = TypeVar('Sub', bound=Union[UserId, Service])
 ServiceSub = TypeVar('ServiceSub', bound=Service)
 
-AccessTokenPayloadType = TypeVar("AccessTokenPayloadType", bound=Union[
-    'ClientAccessTokenPayload', 'ServiceAccessTokenPayload'])
-
 class TokenBearer(str, Enum):  
     CLIENT = "CLIENT"
     SERVICE = "SERVICE"
@@ -77,3 +74,6 @@ def mask_token(token: str, visible_chars: int = 4) -> str:
     masked_part = '*' * (len(token) - visible_chars)
     visible_part = token[-visible_chars:]
     return f"{masked_part}{visible_part}"
+
+AccessTokenPayloadType = TypeVar("AccessTokenPayloadType", bound=Union[
+    ClientAccessTokenPayload, ServiceAccessTokenPayload])

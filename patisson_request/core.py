@@ -32,6 +32,8 @@ class Response(BaseModel, Generic[ResponseType]):
     is_error: bool
     body: ResponseType
 
+NULL = ''
+
 @dataclass
 class SelfAsyncService:
     self_service: Service
@@ -41,8 +43,8 @@ class SelfAsyncService:
     headers: HeadersType = field(default_factory=lambda: {})
     cache_type: type[BaseAsyncTTLCache] = RedisAsyncCache
     cache_kwargs: Mapping[str, Any] = field(default_factory=lambda: {})
-    access_token: Token = ''
-    refresh_token: Token = ''
+    access_token: Token = NULL
+    refresh_token: Token = NULL
     update_tokens_time: Seconds = 60 * 60 * 4
     default_max_reconnections: int = 3
     default_timeout: float = 3.0
@@ -74,7 +76,7 @@ class SelfAsyncService:
         if self.use_telemetry:
             HTTPXClientInstrumentor().instrument()
         
-        logging_msg = ''
+        logging_msg = NULL
         secret_var = [
             'password'
         ]
@@ -127,6 +129,13 @@ class SelfAsyncService:
         self.access_token = response.body.access_token
         self.refresh_token = response.body.refresh_token
         self.logger.info('tokens have been received')
+    
+    
+    async def get_access_token(self) -> str:
+        if self.access_token != NULL: return self.access_token
+        else: 
+            await self.get_tokens()
+            return self.access_token
     
     
     async def tokens_update_task(self) -> NoReturn:
@@ -223,7 +232,7 @@ class SelfAsyncService:
         if not headers:
             headers = {**self.headers, **add_headers}
             if use_auth_token:
-                if self.access_token == '':
+                if self.access_token == NULL:
                     await self.get_tokens_by_login()
                 headers['Authorization'] = header_auth_format.format(self.access_token) 
         
