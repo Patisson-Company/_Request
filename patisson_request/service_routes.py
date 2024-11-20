@@ -1,23 +1,22 @@
 from datetime import datetime
-from typing import Any, Callable, Generic, List, Optional, Sequence, Union
-
-from pydantic import BaseModel, Field
+from typing import Callable, List, Optional, Sequence, Union
 
 from patisson_request import jwt_tokens
 from patisson_request.graphql.queries import build_query, format_strings
 from patisson_request.roles import ClientPermissions, Role
 from patisson_request.service_requests import (AuthenticationRequest,
-                                               UsersRequest)
+                                               GetRequest, HttpxPostData,
+                                               PostRequest, UsersRequest)
 from patisson_request.service_responses import (AuthenticationResponse,
                                                 BooksResponse,
                                                 HealthCheckBodyResponse,
-                                                ResponseType, SuccessResponse,
-                                                TokensSetResponse, UsersResponse, VerifyUserResponse)
+                                                SuccessResponse,
+                                                TokensSetResponse,
+                                                UsersResponse,
+                                                VerifyUserResponse)
 from patisson_request.services import Service
-from patisson_request.types import (GraphqlField, NestedGraphqlFields, Path,
-                                    RequestContent, RequestData, RequestFiles,
-                                    Seconds, Token)
-
+from patisson_request.types import (GraphqlField, NestedGraphqlFields, Seconds,
+                                    Token, RequestFiles)
 
 def url_params(**kwargs) -> str:
     query = ''
@@ -25,38 +24,6 @@ def url_params(**kwargs) -> str:
         if kwarg: 
             query += f'{kwarg}={kwargs[kwarg]}&'
     return query
-
-
-class HttpxPostData(BaseModel):
-    json_: Optional[Any] = Field(None, alias='json')
-    data: Optional[RequestData] = None
-    content: Optional[RequestContent] = None   
-    files: Optional[RequestFiles] = None
-    
-    class Config:
-        arbitrary_types_allowed = True
-    
-    def model_dump(self, *args, **kwargs):
-        kwargs.setdefault('by_alias', True)
-        return super().model_dump(*args, **kwargs)
-    
-class BaseRequest(BaseModel, Generic[ResponseType]):
-    service: Service
-    path: Path
-    response_type: type[ResponseType]    
-    
-    def __neg__(self) -> tuple[Service, Path, type[ResponseType]]:
-        return (self.service, self.path, self.response_type)
-
-class GetRequest(BaseRequest[ResponseType], Generic[ResponseType]):
-    ''''''
-
-class PostRequest(BaseRequest[ResponseType], Generic[ResponseType]):
-    post_data: HttpxPostData = HttpxPostData()  # type: ignore[reportCallIssue]
-    
-    def __neg__(self) -> tuple[Service, Path, type[ResponseType], HttpxPostData]:
-        base_params = super().__neg__()
-        return *base_params, self.post_data
 
 
 class AuthenticationRoute:
@@ -471,7 +438,7 @@ class UsersRoute:
     @staticmethod
     def health() -> GetRequest[HealthCheckBodyResponse]:
         return GetRequest(
-            service=Service.BOOKS,
+            service=Service.USERS,
             path='health',
             response_type=HealthCheckBodyResponse
         )
@@ -557,77 +524,111 @@ class UsersRoute:
                 )),
             response_type=TokensSetResponse
         )
+    
+    class api:
         
-    @staticmethod
-    def create_library(
-        book_id: str, user_id: str, status: int
-        ) -> PostRequest[SuccessResponse]:
-        path = 'api/v1/create-library'
-        return PostRequest(
-            service=Service.USERS,
-            path=path,
-            post_data=HttpxPostData(
-                json=UsersRequest.CreateLibrary(
-                    book_id=book_id,
-                    user_id=user_id,
-                    status=status
-                )),
-            response_type=SuccessResponse
-        )
-        
-    @staticmethod
-    def create_ban(
-        user_id: str, reason: int, 
-        comment: str, end_date: datetime
-        ) -> PostRequest[SuccessResponse]:
-        path = 'api/v1/create-ban'
-        return PostRequest(
-            service=Service.USERS,
-            path=path,
-            post_data=HttpxPostData(
-                json=UsersRequest.CreateBan(
-                    user_id=user_id,
-                    reason=reason,
-                    comment=comment,
-                    end_date=end_date,
-                )),
-            response_type=SuccessResponse
-        )
-        
-    @staticmethod
-    def verify_user(
-        access_token: str
-    ) -> PostRequest[VerifyUserResponse]:
-        path = 'api/v1/verify-user'
-        return PostRequest(
-            service=Service.USERS,
-            path=path,
-            post_data=HttpxPostData(
-                json=UsersRequest.VerifyUser(
-                    access_token=access_token
+        class v1:
+                    
+            @staticmethod
+            def create_library(
+                book_id: str, user_id: str, status: int
+                ) -> PostRequest[SuccessResponse]:
+                path = 'api/v1/create-library'
+                return PostRequest(
+                    service=Service.USERS,
+                    path=path,
+                    post_data=HttpxPostData(
+                        json=UsersRequest.CreateLibrary(
+                            book_id=book_id,
+                            user_id=user_id,
+                            status=status
+                        )),
+                    response_type=SuccessResponse
                 )
-            ),
-            response_type=VerifyUserResponse
-        )
-        
-    @staticmethod
-    def update_user(
-        refresh_token: str
-    ) -> PostRequest[TokensSetResponse]:
-        path = 'api/v1/update-user'
-        return PostRequest(
-            service=Service.USERS,
-            path=path,
-            post_data=HttpxPostData(
-                json=UsersRequest.UpdateUser(
-                    refresh_token=refresh_token
+                
+            @staticmethod
+            def create_ban(
+                user_id: str, reason: int, 
+                comment: str, end_date: datetime
+                ) -> PostRequest[SuccessResponse]:
+                path = 'api/v1/create-ban'
+                return PostRequest(
+                    service=Service.USERS,
+                    path=path,
+                    post_data=HttpxPostData(
+                        json=UsersRequest.CreateBan(
+                            user_id=user_id,
+                            reason=reason,
+                            comment=comment,
+                            end_date=end_date,
+                        )),
+                    response_type=SuccessResponse
                 )
-            ),
-            response_type=TokensSetResponse
-        )
-        
+                
+            @staticmethod
+            def verify_user(
+                access_token: str
+            ) -> PostRequest[VerifyUserResponse]:
+                path = 'api/v1/verify-user'
+                return PostRequest(
+                    service=Service.USERS,
+                    path=path,
+                    post_data=HttpxPostData(
+                        json=UsersRequest.VerifyUser(
+                            access_token=access_token
+                        )
+                    ),
+                    response_type=VerifyUserResponse
+                )
+                
+            @staticmethod
+            def update_user(
+                refresh_token: str
+            ) -> PostRequest[TokensSetResponse]:
+                path = 'api/v1/update-user'
+                return PostRequest(
+                    service=Service.USERS,
+                    path=path,
+                    post_data=HttpxPostData(
+                        json=UsersRequest.UpdateUser(
+                            refresh_token=refresh_token
+                        )
+                    ),
+                    response_type=TokensSetResponse
+                )
+                
 
+class InternalMediaRoute:
+    
+    @staticmethod
+    def health() -> GetRequest[HealthCheckBodyResponse]:
+        return GetRequest(
+            service=Service.INTERNAL_MEDIA,
+            path='health',
+            response_type=HealthCheckBodyResponse
+        )
+    
+    class api:
+        
+        class v1:
+            
+            @staticmethod
+            def upload(
+                file: bytes
+            ) -> PostRequest[SuccessResponse]:
+                path = 'api/v1/upload'
+                return PostRequest(
+                    service=Service.INTERNAL_MEDIA,
+                    path=path,
+                    post_data=HttpxPostData(
+                        files={'file': file}
+                    ),  # type: ignore[]
+                    response_type=SuccessResponse
+                )
+    
+        
+        
 USERS_VERIFY_ROUTE: dict[
     Service, Callable[..., PostRequest[VerifyUserResponse]]] = {
-    Service.USERS: UsersRoute.verify_user
+    Service.USERS: UsersRoute.api.v1.verify_user
 }

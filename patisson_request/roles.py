@@ -10,6 +10,7 @@ Permissions = TypeVar("Permissions", bound=Union['ServicePermissions', 'ClientPe
 class ServicePermissions:
     users_auth: bool
     user_reg: bool
+    media_access: bool
     
 @dataclass(frozen=True, kw_only=True)    
 class ClientPermissions:
@@ -57,6 +58,7 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
     _TEST = Role[ServicePermissions](
         "_TEST",
         ServicePermissions(
+            media_access=True,
             users_auth=True,
             user_reg=True
         )
@@ -64,6 +66,7 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
     MINIMUM = Role[ServicePermissions](
         "MINIMUM", 
         ServicePermissions(
+            media_access=False,
             users_auth=False,
             user_reg=False
             )
@@ -71,6 +74,7 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
     SERVES_USERS = Role[ServicePermissions](
         "SERVES_USERS",
         ServicePermissions(
+            media_access=True,
             users_auth=True,
             user_reg=True
             )
@@ -78,6 +82,7 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
     AUTHENTICATION = Role[ServicePermissions](
         "AUTHENTICATION", 
         ServicePermissions(
+            media_access=False,
             users_auth=True,
             user_reg=False
             )

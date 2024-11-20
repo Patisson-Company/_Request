@@ -1,9 +1,45 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Generic, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from patisson_request.types import Token, Seconds
+from patisson_request.service_responses import ResponseType
+from patisson_request.services import Service
+from patisson_request.types import (Path, RequestContent, RequestData,
+                                    RequestFiles, Seconds, Token)
+
+
+class HttpxPostData(BaseModel):
+    json_: Optional[Any] = Field(None, alias='json')
+    data: Optional[RequestData] = None
+    content: Optional[RequestContent] = None   
+    files: Optional[RequestFiles] = None
+    
+    class Config:
+        arbitrary_types_allowed = True
+    
+    def model_dump(self, *args, **kwargs):
+        kwargs.setdefault('by_alias', True)
+        return super().model_dump(*args, **kwargs)
+    
+    
+class BaseRequest(BaseModel, Generic[ResponseType]):
+    service: Service
+    path: Path
+    response_type: type[ResponseType]    
+    
+    def __neg__(self) -> tuple[Service, Path, type[ResponseType]]:
+        return (self.service, self.path, self.response_type)
+
+class GetRequest(BaseRequest[ResponseType], Generic[ResponseType]):
+    ''''''
+
+class PostRequest(BaseRequest[ResponseType], Generic[ResponseType]):
+    post_data: HttpxPostData = HttpxPostData()  # type: ignore[reportCallIssue]
+    
+    def __neg__(self) -> tuple[Service, Path, type[ResponseType], HttpxPostData]:
+        base_params = super().__neg__()
+        return *base_params, self.post_data
 
 
 class AuthenticationRequest:
