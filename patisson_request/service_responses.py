@@ -127,14 +127,21 @@ class UsersResponse:
         
     class Glibraries(GraphqlResponse[_GQLResponseFields.UsersService.libraries]):
         ''''''
+
+
+class IntertnalMediaResponse:
+    
+    class FileID(BaseModel):
+        id: str
         
 
 ResponseBody: TypeAlias = (
     ErrorBodyResponse_4xx | ErrorBodyResponse_5xx
     | HealthCheckBodyResponse | GraphqlResponse
     | jwt_tokens.RefreshTokenPayload 
-    | AuthenticationResponse.Verify 
     | TokensSetResponse | SuccessResponse | VerifyUserResponse
+    | AuthenticationResponse.Verify 
+    | IntertnalMediaResponse.FileID
 )
 
 ResponseType = TypeVar("ResponseType", bound=ResponseBody)

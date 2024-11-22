@@ -10,13 +10,15 @@ from patisson_request.service_requests import (AuthenticationRequest,
 from patisson_request.service_responses import (AuthenticationResponse,
                                                 BooksResponse,
                                                 HealthCheckBodyResponse,
+                                                IntertnalMediaResponse,
                                                 SuccessResponse,
                                                 TokensSetResponse,
                                                 UsersResponse,
                                                 VerifyUserResponse)
 from patisson_request.services import Service
-from patisson_request.types import (GraphqlField, NestedGraphqlFields, Seconds,
-                                    Token, RequestFiles)
+from patisson_request.types import (GraphqlField, NestedGraphqlFields,
+                                    RequestFiles, Seconds, Token)
+
 
 def url_params(**kwargs) -> str:
     query = ''
@@ -615,7 +617,7 @@ class InternalMediaRoute:
             @staticmethod
             def upload(
                 file: bytes
-            ) -> PostRequest[SuccessResponse]:
+            ) -> PostRequest[IntertnalMediaResponse.FileID]:
                 path = 'api/v1/upload'
                 return PostRequest(
                     service=Service.INTERNAL_MEDIA,
@@ -623,7 +625,7 @@ class InternalMediaRoute:
                     post_data=HttpxPostData(
                         files={'file': file}
                     ),  # type: ignore[]
-                    response_type=SuccessResponse
+                    response_type=IntertnalMediaResponse.FileID
                 )
     
         
