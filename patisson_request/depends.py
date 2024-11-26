@@ -8,7 +8,6 @@ from patisson_request.errors import ErrorCode, ErrorSchema, InvalidJWT
 from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
                                          ServiceAccessTokenPayload)
 from patisson_request.types import Token
-import logging
 
 
 async def verify_service_token_dep(self_service: SelfAsyncService, 

@@ -1,2 +1,0 @@
-schema: patisson_request/graphql/schemas/books.graphql
-output: patisson_request/graphql/models/books_model.py

@@ -3,7 +3,7 @@ from typing import Any, Generic, Optional
 
 from pydantic import BaseModel, Field
 
-from patisson_request.service_responses import ResponseType
+from patisson_request.service_responses import ResponseBodyTypeVar
 from patisson_request.services import Service
 from patisson_request.types import (Path, RequestContent, RequestData,
                                     RequestFiles, Seconds, Token)
@@ -23,23 +23,24 @@ class HttpxPostData(BaseModel):
         return super().model_dump(*args, **kwargs)
     
     
-class BaseRequest(BaseModel, Generic[ResponseType]):
+class BaseRequest(BaseModel, Generic[ResponseBodyTypeVar]):
     service: Service
     path: Path
-    response_type: type[ResponseType]    
+    response_type: type[ResponseBodyTypeVar]    
     
-    def __neg__(self) -> tuple[Service, Path, type[ResponseType]]:
+    def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar]]:
         return (self.service, self.path, self.response_type)
 
-class GetRequest(BaseRequest[ResponseType], Generic[ResponseType]):
+class GetRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]):
     ''''''
 
-class PostRequest(BaseRequest[ResponseType], Generic[ResponseType]):
+class PostRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]):
     post_data: HttpxPostData = HttpxPostData()  # type: ignore[reportCallIssue]
+    is_graphql: bool = False
     
-    def __neg__(self) -> tuple[Service, Path, type[ResponseType], HttpxPostData]:
+    def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar], HttpxPostData, bool]:
         base_params = super().__neg__()
-        return *base_params, self.post_data
+        return *base_params, self.post_data, self.is_graphql
 
 
 class AuthenticationRequest:

@@ -3,11 +3,11 @@
 # pylint: disable-all
 # mypy: ignore-errors
 
-import enum
 import typing as _t
-from datetime import date, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from patisson_request.graphql.models.base import EmptyField, GraphQLBaseModel
 
 __all__ = [
     # "GraphQLBaseModel",
@@ -27,25 +27,6 @@ __all__ = [
     "Review",
     "ReviewResponse",
 ]
-
-class EmptyField: ...
-
-class GraphQLBaseModel(BaseModel):
-    """Base Model for GraphQL object."""
-
-    class Config:
-        allow_population_by_name = True
-        json_encoders = {
-            # custom output conversion for datetime
-            datetime: lambda dt: dt.isoformat()
-        }
-        arbitrary_types_allowed = True 
-
-    def __getattribute__(self, name: str):
-        value = super().__getattribute__(name)
-        if isinstance(value, EmptyField):
-            raise AttributeError(f"The field '{name}' has not been initialized.")
-        return value
     
 
 # The `Boolean` scalar type represents `true` or `false`.
@@ -83,19 +64,19 @@ class Book(GraphQLBaseModel):
     An Object type
     See https://graphql.org/learn/schema/#object-types-and-fields
     """
-    google_id: 'String' = Field(default=EmptyField())
-    id: 'String' = Field(default=EmptyField())
-    title: 'String' = Field(default=EmptyField())
-    authors: _t.Optional[_t.List[_t.Optional['Author']]] = Field(default=EmptyField())
-    categories: _t.Optional[_t.List[_t.Optional['Category']]] = Field(default=EmptyField())
-    description: _t.Optional['String'] = Field(default=EmptyField())
-    language: _t.Optional['String'] = Field(default=EmptyField())
-    maturityRating: _t.Optional['String'] = Field(default=EmptyField())
-    pageCount: _t.Optional['Int'] = Field(default=EmptyField())
-    publishedDate: _t.Optional['String'] = Field(default=EmptyField())
-    publisher: _t.Optional['String'] = Field(default=EmptyField())
-    smallThumbnail: _t.Optional['String'] = Field(default=EmptyField())
-    thumbnail: _t.Optional['String'] = Field(default=EmptyField())
+    google_id: String | EmptyField = EmptyField()
+    id: String | EmptyField = EmptyField()
+    title: String | EmptyField = EmptyField()
+    authors: _t.Optional[_t.List[_t.Optional['Author']]] | EmptyField = EmptyField()
+    categories: _t.Optional[_t.List[_t.Optional['Category']]] | EmptyField = EmptyField()
+    description: _t.Optional['String'] | EmptyField = EmptyField()
+    language: _t.Optional['String'] | EmptyField = EmptyField()
+    maturityRating: _t.Optional['String'] | EmptyField = EmptyField()
+    pageCount: _t.Optional['Int'] | EmptyField = EmptyField()
+    publishedDate: _t.Optional['String'] | EmptyField = EmptyField()
+    publisher: _t.Optional['String'] | EmptyField = EmptyField()
+    smallThumbnail: _t.Optional['String'] | EmptyField = EmptyField()
+    thumbnail: _t.Optional['String'] | EmptyField = EmptyField()
     typename__: _t.Literal["Book"] = Field(default="Book", alias="__typename")
 
 
@@ -114,8 +95,8 @@ class Error(GraphQLBaseModel):
     An Object type
     See https://graphql.org/learn/schema/#object-types-and-fields
     """
-    error: 'String' = Field(default=EmptyField())
-    extra: _t.Optional['String'] = Field(default=EmptyField())
+    error: String | EmptyField = EmptyField()
+    extra: _t.Optional['String'] | EmptyField = EmptyField()
     typename__: _t.Literal["Error"] = Field(default="Error", alias="__typename")
 
 
@@ -124,12 +105,12 @@ class Review(GraphQLBaseModel):
     An Object type
     See https://graphql.org/learn/schema/#object-types-and-fields
     """
-    actual: 'Boolean' = Field(default=EmptyField())
-    book: 'Book' = Field(default=EmptyField())
-    id: 'ID' = Field(default=EmptyField())
-    stars: 'Int' = Field(default=EmptyField())
-    user_id: 'String' = Field(default=EmptyField())
-    comment: _t.Optional['String'] = Field(default=EmptyField())
+    actual: Boolean | EmptyField = EmptyField()
+    book: Book | EmptyField = EmptyField()
+    id: ID | EmptyField = EmptyField()
+    stars: Int | EmptyField = EmptyField()
+    user_id: String | EmptyField = EmptyField()
+    comment: _t.Optional['String'] | EmptyField = EmptyField()
     typename__: _t.Literal["Review"] = Field(default="Review", alias="__typename")
 
 
@@ -138,8 +119,8 @@ class ReviewResponse(GraphQLBaseModel):
     An Object type
     See https://graphql.org/learn/schema/#object-types-and-fields
     """
-    success: 'Boolean' = Field(default=EmptyField())
-    errors: _t.Optional[_t.List[_t.Optional['Error']]] = Field(default=EmptyField())
+    success: Boolean | EmptyField = EmptyField()
+    errors: _t.Optional[_t.List[_t.Optional['Error']]] | EmptyField = EmptyField()
     typename__: _t.Literal["ReviewResponse"] = Field(default="ReviewResponse", alias="__typename")
 
 

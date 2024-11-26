@@ -135,7 +135,7 @@ class IntertnalMediaResponse:
         id: str
         
 
-ResponseBody: TypeAlias = (
+ResponseBodyAlias: TypeAlias = (
     ErrorBodyResponse_4xx | ErrorBodyResponse_5xx
     | HealthCheckBodyResponse | GraphqlResponse
     | jwt_tokens.RefreshTokenPayload 
@@ -144,4 +144,4 @@ ResponseBody: TypeAlias = (
     | IntertnalMediaResponse.FileID
 )
 
-ResponseType = TypeVar("ResponseType", bound=ResponseBody)
+ResponseBodyTypeVar = TypeVar("ResponseBodyTypeVar", bound=ResponseBodyAlias)

@@ -56,6 +56,6 @@ class RedisAsyncCache(BaseAsyncTTLCache):
 
     async def get(self, key: str) -> bytes | None:
         try:
-            value = await self.redis.get(name=key)
+            return await self.redis.get(name=key)
         except Exception as e:
             self.logger.warning(e)

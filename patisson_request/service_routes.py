@@ -201,7 +201,8 @@ class BooksRoute:
                 response_type=BooksResponse.Gbooks,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='books', args=args, fields=fields)}
-                    )
+                    ),
+                is_graphql=True
             )
         
         @staticmethod
@@ -252,7 +253,8 @@ class BooksRoute:
                 response_type=BooksResponse.GbooksDeep,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='booksDeep', args=args, fields=fields)}
-                    )
+                    ),
+                is_graphql=True
                 )
         
         @staticmethod
@@ -277,7 +279,8 @@ class BooksRoute:
                 response_type=BooksResponse.Gauthors,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='authors', args=args, fields=fields)}
-                    )
+                    ),
+                is_graphql=True
             )
         
         @staticmethod
@@ -302,7 +305,8 @@ class BooksRoute:
                 response_type=BooksResponse.Gcategories,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='categories', args=args, fields=fields)}
-                )
+                ),
+                is_graphql=True
             )
         
         @staticmethod
@@ -333,7 +337,8 @@ class BooksRoute:
                 response_type=BooksResponse.Greviews,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='reviews', args=args, fields=fields)}
-                )
+                ),
+                is_graphql=True
             )
         
         @staticmethod
@@ -366,7 +371,8 @@ class BooksRoute:
                 response_type=BooksResponse.GreviewsDeep,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='mutation', name='reviewsDeep', args=args, fields=fields)}
-                )
+                ),
+                is_graphql=True
             )
 
         @staticmethod
@@ -389,7 +395,8 @@ class BooksRoute:
                 response_type=BooksResponse.GcreateReview,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='mutation', name='createReview', args=args, fields=fields)}
-                )
+                ),
+                is_graphql=True
             )
         
         @staticmethod
@@ -412,7 +419,8 @@ class BooksRoute:
                 response_type=BooksResponse.GupdateReview,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='mutation', name='updateReview', args=args, fields=fields)}
-                )
+                ),
+                is_graphql=True
             )
         
         @staticmethod
@@ -431,7 +439,8 @@ class BooksRoute:
                 response_type=BooksResponse.GdeleteReview,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='mutation', name='deleteReview', args=args, fields=fields)}
-                )
+                ),
+                is_graphql=True
             )
 
 
@@ -475,7 +484,8 @@ class UsersRoute:
                 response_type=UsersResponse.Gusers,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='users', args=args, fields=fields)}
-                    )
+                    ),
+                is_graphql=True
             )
             
         @staticmethod
@@ -498,39 +508,40 @@ class UsersRoute:
                 response_type=UsersResponse.Glibraries,
                 post_data=HttpxPostData(
                     json={'query': build_query(type='query', name='libraries', args=args, fields=fields)}
-                )
+                ),
+                is_graphql=True
             )
-            
-    @staticmethod
-    def create_user(
-        username: str, password: str,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
-        avatar: Optional[str] = None,
-        about: Optional[str] = None,
-        expire_in: Optional[Seconds] = None
-        ) -> PostRequest[TokensSetResponse]:
-        path = 'api/v1/create-user'
-        return PostRequest(
-            service=Service.USERS,
-            path=path,
-            post_data=HttpxPostData(
-                json=UsersRequest.CreateUser(
-                    username=username,
-                    password=password,
-                    first_name=first_name,
-                    last_name=last_name,
-                    avatar=avatar,
-                    about=about,
-                    expire_in=expire_in
-                )),
-            response_type=TokensSetResponse
-        )
     
     class api:
         
         class v1:
-                    
+            
+            @staticmethod
+            def create_user(
+                username: str, password: str,
+                first_name: Optional[str] = None,
+                last_name: Optional[str] = None,
+                avatar: Optional[str] = None,
+                about: Optional[str] = None,
+                expire_in: Optional[Seconds] = None
+                ) -> PostRequest[TokensSetResponse]:
+                path = 'api/v1/create-user'
+                return PostRequest(
+                    service=Service.USERS,
+                    path=path,
+                    post_data=HttpxPostData(
+                        json=UsersRequest.CreateUser(
+                            username=username,
+                            password=password,
+                            first_name=first_name,
+                            last_name=last_name,
+                            avatar=avatar,
+                            about=about,
+                            expire_in=expire_in
+                        )),
+                    response_type=TokensSetResponse
+                )
+        
             @staticmethod
             def create_library(
                 book_id: str, user_id: str, status: int

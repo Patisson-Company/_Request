@@ -13,12 +13,14 @@ from pydantic import BaseModel
 from patisson_request import jwt_tokens
 from patisson_request.cache import BaseAsyncTTLCache, RedisAsyncCache
 from patisson_request.errors import ErrorCode, UnauthorizedServiceError
+from patisson_request.graphql.models.books_model import EmptyField
 from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
                                          ServiceAccessTokenPayload,
                                          TokenBearer)
 from patisson_request.service_responses import (ErrorBodyResponse_4xx,
                                                 ErrorBodyResponse_5xx,
-                                                ResponseType)
+                                                ResponseBodyAlias,
+                                                ResponseBodyTypeVar)
 from patisson_request.service_routes import (USERS_VERIFY_ROUTE,
                                              AuthenticationRoute,
                                              HttpxPostData)
@@ -26,11 +28,13 @@ from patisson_request.services import Service
 from patisson_request.types import URL, HeadersType, Path, Seconds, Token
 
 
-class Response(BaseModel, Generic[ResponseType]):
+class Response(BaseModel, Generic[ResponseBodyTypeVar]):
     status_code: int
     headers: dict[str, str]
     is_error: bool
-    body: ResponseType
+    body: ResponseBodyTypeVar
+    
+    
 
 NULL = ''
 
@@ -53,6 +57,7 @@ class SelfAsyncService:
     default_use_auth_token: bool = True
     default_header_auth_format: str = 'Bearer {}'
     default_use_cache: bool = True
+    default_use_graphql_cache: bool = True
     default_users_auth_service: Service = Service.USERS
     use_telemetry: bool = True
     logger_object: Optional[logging.Logger] = None
@@ -87,11 +92,30 @@ class SelfAsyncService:
     
     @staticmethod
     def dict_to_bytes(dict_ : dict) -> bytes:
-        return json.dumps(dict_).encode('utf-8')
+        return json.dumps(dict_, default=EmptyField.empty_field_encoder).encode('utf-8')
     
     @staticmethod
     def bytes_to_dict(bytes_: bytes) -> dict:
         return json.loads(bytes_)
+    
+    @staticmethod
+    def remove_empty_fields_from_response_body(body: ResponseBodyAlias | BaseModel) -> dict:
+        cleaned_data = {}
+        for field, value in body.model_dump(exclude_unset=True, exclude_defaults=True).items():
+            if isinstance(value, BaseModel):
+                cleaned_data[field] = SelfAsyncService.remove_empty_fields_from_response_body(value)
+            elif isinstance(value, list):
+                cleaned_list = []
+                for item in value:
+                    if isinstance(item, BaseModel):
+                        cleaned_item = SelfAsyncService.remove_empty_fields_from_response_body(item)
+                        cleaned_list.append(cleaned_item)
+                    elif item != EmptyField():
+                        cleaned_list.append(item)
+                cleaned_data[field] = cleaned_list
+            elif value != EmptyField():
+                cleaned_data[field] = value
+        return cleaned_data
     
     def activate_tokens_update_task(self):
         loop = asyncio.get_event_loop()
@@ -211,11 +235,11 @@ class SelfAsyncService:
         
     
     async def _request(
-        self, service: Service, url: URL, method: str, response_type: type[ResponseType],
+        self, service: Service, url: URL, method: str, response_type: type[ResponseBodyTypeVar],
         add_headers: HeadersType = {}, headers: Optional[HeadersType] = None,
         max_reconnections: Optional[int] = None, timeout: Optional[float] = None, 
         use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None,
-        **httpx_kwargs) -> Response[ResponseType]:
+        **httpx_kwargs) -> Response[ResponseBodyTypeVar]:
         
         if service == self.self_service:
             self.logger.critical('Services cannot make requests to themselves')
@@ -308,13 +332,13 @@ class SelfAsyncService:
 
     
     async def get_request(
-        self, service: Service, path: Path, response_type: type[ResponseType],
+        self, service: Service, path: Path, response_type: type[ResponseBodyTypeVar],
         add_headers: HeadersType = {}, headers: Optional[HeadersType] = None, 
         use_cache: Optional[bool] = None, cache_lifetime: Optional[Seconds | timedelta] = None,
         max_reconnections: Optional[int] = None, timeout: Optional[float] = None, 
         protocol: Optional[str] = None, host: Optional[str] = None, 
         use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None, 
-        **httpx_kwargs) -> Response[ResponseType]:
+        **httpx_kwargs) -> Response[ResponseBodyTypeVar]:
         
         use_cache = self.default_use_cache if use_cache is None else use_cache
         url = self.get_url(service, path, host, protocol)
@@ -332,25 +356,36 @@ class SelfAsyncService:
             header_auth_format=header_auth_format, **httpx_kwargs
         )
         
-        if use_cache:
+        if use_cache and not response.is_error:
             await self.cache.set(
-                key=url, time=cache_lifetime,
-                value=self.dict_to_bytes(response.model_dump())
+                key=url, value=self.dict_to_bytes(response.model_dump()), 
+                time=cache_lifetime
                 )
             
         return response
     
     
     async def post_request(
-        self, service: Service, path: Path, response_type: type[ResponseType],
-        post_data: Optional[HttpxPostData] = None, add_headers: HeadersType = {}, 
-        headers: Optional[HeadersType] = None, max_reconnections: Optional[int] = None, 
-        timeout: Optional[float] = None, protocol: Optional[str] = None, 
-        host: Optional[str] = None, use_auth_token: Optional[bool] = None, 
-        header_auth_format: Optional[str] = None, **httpx_kwargs) -> Response[ResponseType]:
+        self, service: Service, path: Path, response_type: type[ResponseBodyTypeVar],
+        post_data: Optional[HttpxPostData] = None, is_graphql: bool = False,
+        add_headers: HeadersType = {}, headers: Optional[HeadersType] = None, 
+        max_reconnections: Optional[int] = None, timeout: Optional[float] = None, 
+        protocol: Optional[str] = None, host: Optional[str] = None, 
+        use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None, 
+        use_graphql_cache: Optional[bool] = None, cache_lifetime: Optional[Seconds | timedelta] = None,
+        **httpx_kwargs) -> Response[ResponseBodyTypeVar]:
         
+        use_cache = is_graphql and (use_graphql_cache or self.default_use_graphql_cache)
         url = self.get_url(service, path, host, protocol)
         httpx_kwargs |= post_data.model_dump() if post_data is not None else {}
+        
+        if use_cache:
+            cache_key = str(url+str(post_data.json_))  # type: ignore[reportOptionalMemberAccess]
+            cache_value = await self.cache.get(cache_key) 
+            if cache_value: 
+                value = self.bytes_to_dict(cache_value)        
+                value['body'] = response_type(**value['body'])
+                return Response(**value)
         
         response = await self._request(
             service=service, url=url, method='POST',
@@ -359,5 +394,13 @@ class SelfAsyncService:
             timeout=timeout, use_auth_token=use_auth_token,
             header_auth_format=header_auth_format, **httpx_kwargs
         )
+
+        if use_cache and not response.is_error:
+            response_copy = response.model_copy(deep=True)
+            response_copy.body = self.remove_empty_fields_from_response_body(response_copy.body)  # type: ignore[reportAttributeAccessIssue]
+            await self.cache.set(
+                key=cache_key, time=cache_lifetime, 
+                value=self.dict_to_bytes(response_copy.model_dump()) 
+            )
         
         return response
