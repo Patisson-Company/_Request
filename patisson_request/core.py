@@ -242,8 +242,9 @@ class SelfAsyncService:
         **httpx_kwargs) -> Response[ResponseBodyTypeVar]:
         
         if service == self.self_service:
-            self.logger.critical('Services cannot make requests to themselves')
-            raise RuntimeError('Services cannot make requests to themselves')
+            e = 'Services cannot make requests to themselves'
+            self.logger.critical(e)
+            raise RuntimeError(e)
         
         timeout = self.default_timeout if timeout is None else timeout
         max_reconnections = (self.default_max_reconnections if max_reconnections is None

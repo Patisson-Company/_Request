@@ -6,7 +6,7 @@ from patisson_request import jwt_tokens
 from patisson_request.errors import ErrorSchema
 from patisson_request.graphql.models import books_model as BooksGQL
 from patisson_request.graphql.models import users_models as UsersGQL
-from patisson_request.jwt_tokens import AccessTokenPayloadType
+from patisson_request.jwt_tokens import AccessTokenPayloadType, ClientAccessTokenPayload
 
 GraphqlResponseType = TypeVar("GraphqlResponseType", bound=Union[
     '_GQLResponseFields.BooksService.books', '_GQLResponseFields.BooksService.booksDeep', 
@@ -79,8 +79,8 @@ class SuccessResponse(BaseModel):
     
 class VerifyUserResponse(BaseModel):
     is_verify: bool
-    payload: Optional[object]
-    error: Optional[object] = None
+    payload: Optional[ClientAccessTokenPayload]
+    error: Optional[ErrorSchema] = None
 
 class AuthenticationResponse:
 

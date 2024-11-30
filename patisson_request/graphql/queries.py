@@ -1,7 +1,6 @@
 from typing import Optional, Sequence
-from patisson_request.graphql.models.books_model import *
-from patisson_request.graphql.models.users_models import *
-from patisson_request.types import *
+
+from patisson_request.types import GraphqlField, NestedGraphqlFields
 
 __all__ = [
     'QBook',
@@ -13,7 +12,6 @@ __all__ = [
     'QUser'
 ]
 
-ID: TypeAlias = str
 
 class QBook:
     id = 'id'

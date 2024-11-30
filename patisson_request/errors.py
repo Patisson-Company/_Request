@@ -25,7 +25,6 @@ class ErrorSchema(BaseModel):
     
     class Config:  
         use_enum_values = True
-        
 
 class ValidateError(Exception): ...
 

@@ -16,7 +16,8 @@ class ServicePermissions:
 class ClientPermissions:
     create_lib: bool
     create_ban: bool
-
+    use_chat: bool
+    
     
 class Role(Generic[Permissions]):
 
@@ -94,35 +95,40 @@ class _ClientRole(_EntityRoles[ClientPermissions]):
         "_TEST",
         ClientPermissions(
             create_lib = True,
-            create_ban = True
+            create_ban = True,
+            use_chat=True
         )
     )
     GUEST = Role[ClientPermissions](
         "GUEST",
         ClientPermissions(
             create_lib = False,
-            create_ban = False
+            create_ban = False,
+            use_chat=False
             )
         )
     MEMBER = Role[ClientPermissions](
         "MEMBER",
         ClientPermissions(
             create_lib = True,
-            create_ban = False
+            create_ban = False,
+            use_chat=True
             )
         )
     ADMIN = Role[ClientPermissions](
         "ADMIN",
         ClientPermissions(
             create_lib = True,
-            create_ban = True
+            create_ban = True,
+            use_chat=True
             )
         )
     OWNER = Role[ClientPermissions](
         "OWNER",
         ClientPermissions(
             create_lib = True,
-            create_ban = True
+            create_ban = True,
+            use_chat=True
             )
         )
 
