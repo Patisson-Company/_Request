@@ -15,8 +15,7 @@ REDIS_DB_BY_SERVICE = {
     Service.BOOKS: 2,
     Service.USERS: 3,
     Service.FORUM: 4,
-    Service.INTERNAL_MEDIA: 5,
-    Service.API_GATEWAY: 6
+    Service.INTERNAL_MEDIA: 5
 }
 
 @dataclass(kw_only=True)

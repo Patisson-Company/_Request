@@ -11,6 +11,7 @@ class ServicePermissions:
     users_auth: bool
     user_reg: bool
     media_access: bool
+    forum_access: bool
     
 @dataclass(frozen=True, kw_only=True)    
 class ClientPermissions:
@@ -61,7 +62,8 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
         ServicePermissions(
             media_access=True,
             users_auth=True,
-            user_reg=True
+            user_reg=True,
+            forum_access=True
         )
     )
     MINIMUM = Role[ServicePermissions](
@@ -69,7 +71,8 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
         ServicePermissions(
             media_access=False,
             users_auth=False,
-            user_reg=False
+            user_reg=False,
+            forum_access=False
             )
         )
     SERVES_USERS = Role[ServicePermissions](
@@ -77,7 +80,8 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
         ServicePermissions(
             media_access=True,
             users_auth=True,
-            user_reg=True
+            user_reg=True,
+            forum_access=False
             )
         )
     AUTHENTICATION = Role[ServicePermissions](
@@ -85,7 +89,8 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
         ServicePermissions(
             media_access=False,
             users_auth=True,
-            user_reg=False
+            user_reg=False,
+            forum_access=False
             )
         )
     

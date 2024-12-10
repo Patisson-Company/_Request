@@ -62,6 +62,7 @@ class SelfAsyncService:
     use_telemetry: bool = True
     logger_object: Optional[logging.Logger] = None
     logging_level: int = logging.DEBUG
+    secret_var: list[str] = field(default_factory=lambda: ['password'])
     
     def __post_init__(self) -> None:
         if not self.logger_object:
@@ -81,12 +82,9 @@ class SelfAsyncService:
         if self.use_telemetry:
             HTTPXClientInstrumentor().instrument()
         
-        logging_msg = NULL
-        secret_var = [
-            'password'
-        ]
+        logging_msg = ''
         for attr, value in vars(self).items():
-            if attr in secret_var: continue
+            if attr in self.secret_var: continue
             logging_msg += f" - {attr}: {value}\n"
         self.logger.info(f'Initialized {self.__class__}: \n{logging_msg}')
     
@@ -226,6 +224,7 @@ class SelfAsyncService:
             self.logger.info(f'the client token is valid')
             return payload
     
+    
     def get_url(self, service: Service, path: Path, host: Optional[str] = None,
                  protocol: Optional[str] = None) -> URL:
         return (
@@ -236,7 +235,7 @@ class SelfAsyncService:
     
     async def _request(
         self, service: Service, url: URL, method: str, response_type: type[ResponseBodyTypeVar],
-        add_headers: HeadersType = {}, headers: Optional[HeadersType] = None,
+        add_headers: Optional[HeadersType] = None, headers: Optional[HeadersType] = None,
         max_reconnections: Optional[int] = None, timeout: Optional[float] = None, 
         use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None,
         **httpx_kwargs) -> Response[ResponseBodyTypeVar]:
@@ -255,7 +254,11 @@ class SelfAsyncService:
                               else header_auth_format)
         
         if not headers:
-            headers = {**self.headers, **add_headers}
+            if add_headers:
+                headers = {**self.headers, **add_headers}
+            else:
+                headers = {**self.headers}
+                
             if use_auth_token:
                 if self.access_token == NULL:
                     await self.get_tokens_by_login()
@@ -267,14 +270,15 @@ class SelfAsyncService:
                     httpx_response = await client.request(
                         method, url, headers=headers, timeout=timeout, 
                         **httpx_kwargs)
-                    
                     if service == Service.AUTHENTICATION: break
-                    response_access_token = self.extract_token_from_header(
-                        httpx_response.headers['Authorization']
-                        )
-                    is_verify = await self.service_verify(response_access_token, service)
-                    if not is_verify:
-                        raise UnauthorizedServiceError                            
+                    
+                    if not httpx_response.status_code >= 400:
+                        response_access_token = self.extract_token_from_header(
+                            httpx_response.headers['Authorization']
+                            )
+                        is_verify = await self.service_verify(response_access_token, service)
+                        if not is_verify:
+                            raise UnauthorizedServiceError                            
                     break
                 
                 except httpx.ConnectError: 
@@ -334,7 +338,7 @@ class SelfAsyncService:
     
     async def get_request(
         self, service: Service, path: Path, response_type: type[ResponseBodyTypeVar],
-        add_headers: HeadersType = {}, headers: Optional[HeadersType] = None, 
+        add_headers: Optional[HeadersType] = None, headers: Optional[HeadersType] = None, 
         use_cache: Optional[bool] = None, cache_lifetime: Optional[Seconds | timedelta] = None,
         max_reconnections: Optional[int] = None, timeout: Optional[float] = None, 
         protocol: Optional[str] = None, host: Optional[str] = None, 
@@ -369,7 +373,7 @@ class SelfAsyncService:
     async def post_request(
         self, service: Service, path: Path, response_type: type[ResponseBodyTypeVar],
         post_data: Optional[HttpxPostData] = None, is_graphql: bool = False,
-        add_headers: HeadersType = {}, headers: Optional[HeadersType] = None, 
+        add_headers: Optional[HeadersType] = None, headers: Optional[HeadersType] = None, 
         max_reconnections: Optional[int] = None, timeout: Optional[float] = None, 
         protocol: Optional[str] = None, host: Optional[str] = None, 
         use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None, 
