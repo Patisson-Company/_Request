@@ -20,6 +20,9 @@ class ErrorCode(Enum):
     CLIENT_JWT_SUB_NOT_EQUAL = 'client jwt sub in access and refresh tokens are not equal'
 
 class ErrorSchema(BaseModel):
+    """
+    Pydantic model for http exception
+    """
     error: ErrorCode
     extra: Optional[str] = None
     

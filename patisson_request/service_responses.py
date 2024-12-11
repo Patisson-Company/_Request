@@ -16,8 +16,8 @@ GraphqlResponseType = TypeVar("GraphqlResponseType", bound=Union[
     '_GQLResponseFields.BooksService.deleteReview', '_GQLResponseFields.UsersService.users',
     '_GQLResponseFields.UsersService.libraries'])
 
+
 class _GQLResponseFields:
-    
     class BooksService:
         
         class books(BaseModel):

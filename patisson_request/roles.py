@@ -42,13 +42,32 @@ class Role(Generic[Permissions]):
     
     
 class _EntityRoles(ABC, Generic[Permissions]):
-    
-    def __call__(self, role: str) -> Role[Permissions]:
+    """
+    Represents an immutable role enumeration with additional functionality.
+
+    This class acts as an enumeration for roles, with support for generic 
+    permissions. It provides role lookup via the `__call__` method and ensures
+    immutability by overriding attribute modification methods.
+    """
+
+    def __call__(self, role: str) -> 'Role[Permissions]':
+        """
+        Retrieves the role object corresponding to the provided role name.
+
+        Args:
+            role (str): The name of the role to retrieve.
+
+        Returns:
+            Role[Permissions]: The role object corresponding to the given name.
+
+        Raises:
+            ValueError: If the role name is not defined in the class.
+        """
         role_attr = getattr(self.__class__, role, None)
         if role_attr is None:
             raise ValueError('incorrect role name')
         return role_attr
-        
+
     def __setattr__(self, name, value):
         raise AttributeError(f"Cannot modify immutable attribute")
 
@@ -84,13 +103,22 @@ class _ServiceRole(_EntityRoles[ServicePermissions]):
             forum_access=False
             )
         )
-    AUTHENTICATION = Role[ServicePermissions](
-        "AUTHENTICATION", 
+    MEDIA_ACCESS = Role[ServicePermissions](
+        "MEDIA_ACCESS", 
         ServicePermissions(
-            media_access=False,
-            users_auth=True,
+            media_access=True,
+            users_auth=False,
             user_reg=False,
             forum_access=False
+            )
+        )
+    PROXY = Role[ServicePermissions](
+        "PROXY", 
+        ServicePermissions(
+            media_access=True,
+            users_auth=False,
+            user_reg=True,
+            forum_access=True
             )
         )
     
@@ -104,14 +132,6 @@ class _ClientRole(_EntityRoles[ClientPermissions]):
             use_chat=True
         )
     )
-    GUEST = Role[ClientPermissions](
-        "GUEST",
-        ClientPermissions(
-            create_lib = False,
-            create_ban = False,
-            use_chat=False
-            )
-        )
     MEMBER = Role[ClientPermissions](
         "MEMBER",
         ClientPermissions(

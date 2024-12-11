@@ -16,11 +16,15 @@ from patisson_request.service_responses import (AuthenticationResponse,
                                                 UsersResponse,
                                                 VerifyUserResponse)
 from patisson_request.services import Service
-from patisson_request.types import (GraphqlField, NestedGraphqlFields,
-                                    RequestFiles, Seconds, Token)
+from patisson_request.types import (GraphqlField, NestedGraphqlFields, Seconds,
+                                    Token)
 
 
 def url_params(**kwargs) -> str:
+    """
+    Constructs a URL query string from keyword arguments.
+    If the parameter is None or False, it will be skipped.
+    """
     query = ''
     for kwarg in kwargs:
         if kwarg: 

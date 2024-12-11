@@ -13,6 +13,19 @@ from patisson_request.types import Token
 async def verify_service_token_dep(self_service: SelfAsyncService, 
                                    access_token: Token
                                    ) -> ServiceAccessTokenPayload:
+    """
+    Makes a request to the authentication service to verify the service token
+
+    Args:
+        self_service (SelfAsyncService): instance of the class SelfAsyncService
+        access_token (Token): the token that requires verification
+
+    Raises:
+        InvalidJWT: JWT is uncorrected
+
+    Returns:
+        ServiceAccessTokenPayload
+    """
     token = await self_service.service_verify(service_access_token=str(access_token))
     if token is False:
         raise InvalidJWT(ErrorSchema(
@@ -20,7 +33,13 @@ async def verify_service_token_dep(self_service: SelfAsyncService,
         ))
     return token
 
-def dep_jaeger_service_decorator(tracer: Tracer):
+def dep_opentelemetry_service_decorator(tracer: Tracer):
+    """
+    A decorator for dep that adds span with token attributes
+
+    Args:
+        tracer (Tracer)
+    """
     def decorator(func: Callable[..., Awaitable[ServiceAccessTokenPayload]]):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -40,6 +59,19 @@ def dep_jaeger_service_decorator(tracer: Tracer):
 async def verify_client_token_dep(self_service: SelfAsyncService, 
                                   access_token: Token
                                   ) -> ClientAccessTokenPayload:
+    """
+    Makes a request to the authentication service to verify the client token
+
+    Args:
+        self_service (SelfAsyncService): instance of the class SelfAsyncService
+        access_token (Token): the token that requires verification
+
+    Raises:
+        InvalidJWT: JWT is uncorrected
+
+    Returns:
+        ClientAccessTokenPayload
+    """
     token = await self_service.client_verify(client_access_token=str(access_token))
     if token is False:
         raise InvalidJWT(ErrorSchema(
@@ -47,7 +79,13 @@ async def verify_client_token_dep(self_service: SelfAsyncService,
         ))
     return token
 
-def dep_jaeger_client_decorator(tracer: Tracer):
+def dep_opentelemetry_client_decorator(tracer: Tracer):
+    """
+    A decorator for dep that adds span with token attributes
+
+    Args:
+        tracer (Tracer)
+    """
     def decorator(func: Callable[..., Awaitable[ClientAccessTokenPayload]]):
         @wraps(func)
         async def wrapper(*args, **kwargs):

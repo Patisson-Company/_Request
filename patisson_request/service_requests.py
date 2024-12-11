@@ -10,6 +10,9 @@ from patisson_request.types import (Path, RequestContent, RequestData,
 
 
 class HttpxPostData(BaseModel):
+    """
+    A Pydantic model containing all kinds of supported post request bodies
+    """
     json_: Optional[Any] = Field(None, alias='json')
     data: Optional[RequestData] = None
     content: Optional[RequestContent] = None   
@@ -24,21 +27,41 @@ class HttpxPostData(BaseModel):
     
     
 class BaseRequest(BaseModel, Generic[ResponseBodyTypeVar]):
+    """
+    A Pydantic model containing the meta information required for the request
+    """
     service: Service
     path: Path
     response_type: type[ResponseBodyTypeVar]    
     
     def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar]]:
+        """
+        Returns a tuple of variables in the order appropriate for passing to the request methods
+
+        Returns:
+            tuple[Service, Path, type[ResponseBodyTypeVar]]
+        """
         return (self.service, self.path, self.response_type)
 
 class GetRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]):
-    ''''''
+    """
+    A Pydantic model containing the meta information required for the get request
+    """
 
 class PostRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]):
+    """
+    A Pydantic model containing the meta information required for the post request
+    """
     post_data: HttpxPostData = HttpxPostData()  # type: ignore[reportCallIssue]
     is_graphql: bool = False
     
     def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar], HttpxPostData, bool]:
+        """
+        Returns a tuple of variables in the order appropriate for passing to the request methods
+
+        Returns:
+            tuple[Service, Path, type[ResponseBodyTypeVar], HttpxPostData, bool]
+        """
         base_params = super().__neg__()
         return *base_params, self.post_data, self.is_graphql
 
