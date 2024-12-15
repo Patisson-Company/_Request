@@ -1,3 +1,19 @@
+"""
+This module provides classes and methods for interacting with external services via HTTP requests, 
+handling authentication, retry logic, and caching responses.
+
+Classes:
+    - SelfService: A service client that constructs URLs, sends HTTP requests (GET/POST), handles 
+      retries, manages authentication tokens, and supports caching of responses.
+    - Response: A generic class representing an HTTP response with a dynamic body type, useful for 
+      handling various service responses.
+
+The `SelfService` class contains methods for sending requests to services, verifying authentication tokens,
+and managing response data, including caching and handling errors. The `Response` class models HTTP responses 
+with fields for status code, headers, error flags, and the response body. Both classes are used for service 
+interactions and error management in a robust and scalable manner.
+"""
+
 import asyncio
 import json
 import logging

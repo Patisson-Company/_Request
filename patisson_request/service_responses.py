@@ -1,3 +1,9 @@
+"""
+This module contains all Pydantic models used to define the response schemas for various microservices in the system.
+
+The models ensure strict validation and serialization of data received from the services. Each schema represents the structure of the response body returned by a specific microservice endpoint.
+"""
+
 from typing import Generic, List, Literal, Optional, TypeAlias, TypeVar, Union
 
 from pydantic import BaseModel

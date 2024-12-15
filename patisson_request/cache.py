@@ -1,3 +1,17 @@
+"""
+This module provides an abstract base class and a concrete subclass for asynchronous caching systems
+
+Classes:
+    - BaseAsyncTTLCache: An abstract base class for cache systems that support TTL. It defines the 
+      required `set` and `get` methods for storing and retrieving cache entries with expiration logic.
+    - RedisAsyncCache: A subclass of `BaseAsyncTTLCache` that implements caching using Redis. It includes 
+      methods for asynchronously interacting with a Redis server for storing and retrieving cached data.
+
+Constants:
+    - REDIS_DB_BY_SERVICE: A mapping of services to specific Redis database numbers, 
+      used to organize data storage across multiple Redis databases.
+"""
+
 import abc
 from dataclasses import dataclass
 from datetime import timedelta
@@ -53,7 +67,7 @@ class BaseAsyncTTLCache(abc.ABC):
         """
 
     @abc.abstractmethod
-    async def get(self, key) -> bytes | None: 
+    async def get(self, key: str) -> bytes | None: 
          """
         Asynchronously retrieves a cache entry by its key.
 

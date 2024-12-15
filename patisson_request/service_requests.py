@@ -1,3 +1,9 @@
+"""
+This module contains all Pydantic models used to define the request schemas for various microservices in the system.
+
+The models ensure strict validation and serialization of data sent to the services. Each schema represents the structure of the request body that is sent to a specific microservice endpoint.
+"""
+
 from datetime import datetime
 from typing import Any, Generic, Optional
 
@@ -55,7 +61,7 @@ class PostRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]
     post_data: HttpxPostData = HttpxPostData()  # type: ignore[reportCallIssue]
     is_graphql: bool = False
     
-    def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar], HttpxPostData, bool]:
+    def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar], HttpxPostData, bool]:  # type: ignore[reportIncompatibleMethodOverride]
         """
         Returns a tuple of variables in the order appropriate for passing to the request methods
 

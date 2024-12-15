@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='patisson_request',
-    version='1.6.4',
+    version='1.6.5',
     packages=find_packages(),
     install_requires=[
         "httpx",

@@ -1,3 +1,16 @@
+"""
+This module defines routes and request handlers for all microservices within the system's boundaries. 
+It provides structured access to microservice endpoints, including input parameters and expected responses.
+
+Functions:
+    - url_params: Constructs URL query strings from keyword arguments.
+
+Key Concepts:
+- **Route Definitions**: Each route maps to a specific microservice endpoint and includes details about the service, path, and expected response types.
+- **Input Parameters**: Explicitly defined parameters for constructing requests, ensuring strong typing and validation.
+- **Response Types**: Uses predefined response body schemas for consistent deserialization of service responses.
+"""
+
 from datetime import datetime
 from typing import Callable, List, Optional, Sequence, Union
 
@@ -382,13 +395,11 @@ class BooksRoute:
         @staticmethod
         def createReview(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
-            user_id: str,
             book_id: str,
             stars: int,
             comment: Optional[str] = None
         ) -> PostRequest[BooksResponse.GcreateReview]:
             args = [
-                f'user_id: "{user_id}"',
                 f'book_id: "{book_id}"',
                 f'stars: {stars}',
                 f'comment: "{comment}"' if comment else None,
@@ -406,13 +417,11 @@ class BooksRoute:
         @staticmethod
         def updateReview(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
-            user_id: str,
             book_id: str,
             stars: int,
             comment: Optional[str] = None
         ) -> PostRequest[BooksResponse.GupdateReview]:
             args = [
-                f'user_id: "{user_id}"',
                 f'book_id: "{book_id}"',
                 f'stars: {stars}',
                 f'comment: "{comment}"' if comment else None,
@@ -430,11 +439,9 @@ class BooksRoute:
         @staticmethod
         def deleteReview(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
-            user_id: str,
             book_id: str
         ) -> PostRequest[BooksResponse.GdeleteReview]:
             args = [
-                f'user_id: "{user_id}"',
                 f'book_id: "{book_id}"',
             ]
             return PostRequest(
