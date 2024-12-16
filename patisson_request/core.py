@@ -1,3 +1,4 @@
+# pyright: reportPossiblyUnboundVariable=false
 """
 This module provides classes and methods for interacting with external services via HTTP requests, 
 handling authentication, retry logic, and caching responses.
