@@ -56,8 +56,8 @@ class QError:
 class QReviewResponse:
     success = 'success'
     errors = 'errors'
-    
-    
+
+
 class QUser:
     id = 'id'
     username = 'username'
@@ -66,9 +66,9 @@ class QUser:
     avatar = 'avatar'
     about = 'about'
     role = 'role'
-    
-    
-def build_query(type: str, name: str, args: Sequence[Optional[str]], 
+
+
+def build_query(type: str, name: str, args: Sequence[Optional[str]],
                 fields: Sequence[GraphqlField | NestedGraphqlFields]) -> str:
     """
     Constructs a GraphQL query string.
@@ -77,21 +77,22 @@ def build_query(type: str, name: str, args: Sequence[Optional[str]],
         type (str): The query type (e.g., 'query' or 'mutation').
         name (str): The name of the GraphQL operation.
         args (Sequence[Optional[str]]): A sequence of arguments for the query (optional).
-        fields (Sequence[GraphqlField | NestedGraphqlFields]): A sequence of fields to be queried, which can be
-            simple fields (GraphqlField) or nested fields (NestedGraphqlFields).
+        fields (Sequence[GraphqlField | NestedGraphqlFields]): A sequence of fields to be queried, which can
+            be simple fields (GraphqlField) or nested fields (NestedGraphqlFields).
 
     Returns:
         str: The complete GraphQL query string.
     """
     query_args = ', '.join(filter(None, args))
-    return f'{type} {{ {name}{'(' + query_args+ ')' if query_args != "" else ""} {{ {build_query_fields(fields)} }} }}'
+    return f'{type} {{ {name}{'(' + query_args + ')' if query_args != "" else ""} {{ {build_query_fields(fields)} }} }}'  # noqa: E501
+
 
 def build_query_fields(fields: Sequence[GraphqlField | NestedGraphqlFields]) -> str:
     """
     Constructs the fields portion of a GraphQL query, handling both simple and nested fields.
 
     Args:
-        fields (Sequence[GraphqlField | NestedGraphqlFields]): A sequence of fields, which can be simple 
+        fields (Sequence[GraphqlField | NestedGraphqlFields]): A sequence of fields, which can be simple
             fields (GraphqlField) or nested fields (NestedGraphqlFields).
 
     Returns:
@@ -105,6 +106,7 @@ def build_query_fields(fields: Sequence[GraphqlField | NestedGraphqlFields]) -> 
             for key, value in block.items():
                 query += f"{key}{{{build_query_fields(value)}}}"
     return query
+
 
 def format_strings(sequence: Sequence[str]) -> str:
     """

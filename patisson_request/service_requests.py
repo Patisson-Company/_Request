@@ -1,7 +1,9 @@
 """
-This module contains all Pydantic models used to define the request schemas for various microservices in the system.
+This module contains all Pydantic models used to define the request schemas for various microservices
+in the system.
 
-The models ensure strict validation and serialization of data sent to the services. Each schema represents the structure of the request body that is sent to a specific microservice endpoint.
+The models ensure strict validation and serialization of data sent to the services. Each schema represents
+the structure of the request body that is sent to a specific microservice endpoint.
 """
 
 from datetime import datetime
@@ -21,25 +23,25 @@ class HttpxPostData(BaseModel):
     """
     json_: Optional[Any] = Field(None, alias='json')
     data: Optional[RequestData] = None
-    content: Optional[RequestContent] = None   
+    content: Optional[RequestContent] = None
     files: Optional[RequestFiles] = None
-    
+
     class Config:
         arbitrary_types_allowed = True
-    
+
     def model_dump(self, *args, **kwargs):
         kwargs.setdefault('by_alias', True)
         return super().model_dump(*args, **kwargs)
-    
-    
+
+
 class BaseRequest(BaseModel, Generic[ResponseBodyTypeVar]):
     """
     A Pydantic model containing the meta information required for the request
     """
     service: Service
     path: Path
-    response_type: type[ResponseBodyTypeVar]    
-    
+    response_type: type[ResponseBodyTypeVar]
+
     def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar]]:
         """
         Returns a tuple of variables in the order appropriate for passing to the request methods
@@ -49,10 +51,12 @@ class BaseRequest(BaseModel, Generic[ResponseBodyTypeVar]):
         """
         return (self.service, self.path, self.response_type)
 
+
 class GetRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]):
     """
     A Pydantic model containing the meta information required for the get request
     """
+
 
 class PostRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]):
     """
@@ -60,8 +64,10 @@ class PostRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]
     """
     post_data: HttpxPostData = HttpxPostData()  # type: ignore[reportCallIssue]
     is_graphql: bool = False
-    
-    def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar], HttpxPostData, bool]:  # type: ignore[reportIncompatibleMethodOverride]
+
+    def __neg__(self) -> tuple[Service, Path,  # type: ignore[reportIncompatibleMethodOverride]
+                               type[ResponseBodyTypeVar],
+                               HttpxPostData, bool]:
         """
         Returns a tuple of variables in the order appropriate for passing to the request methods
 
@@ -73,16 +79,16 @@ class PostRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]
 
 
 class AuthenticationRequest:
-    
+
     class CreateClient(BaseModel):
         client_id: str
         client_role: str
         expire_in: Optional[Seconds] = None
-        
+
     class CreateService(BaseModel):
         login: str
         password: str
-        
+
     class Verify(BaseModel):
         access_token: Token
 
@@ -90,13 +96,13 @@ class AuthenticationRequest:
         client_access_token: Token
         client_refresh_token: Token
         expire_in: Optional[Seconds] = None
-        
+
     class UpdateService(BaseModel):
         refresh_token: Token
 
 
 class UsersRequest:
-    
+
     class CreateUser(BaseModel):
         username: str
         password: str
@@ -108,17 +114,17 @@ class UsersRequest:
 
     class CreateLibrary(BaseModel):
         book_id: str
-        user_id: str 
+        user_id: str
         status: int
-        
+
     class CreateBan(BaseModel):
         user_id: str
         reason: int
-        comment: str 
+        comment: str
         end_date: datetime
-        
+
     class VerifyUser(BaseModel):
         access_token: str
-        
+
     class UpdateUser(BaseModel):
         refresh_token: str

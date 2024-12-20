@@ -1,4 +1,5 @@
 from typing import Literal, Optional
+
 from pydantic import Field
 
 from patisson_request.graphql.models.base import EmptyField, GraphQLBaseModel

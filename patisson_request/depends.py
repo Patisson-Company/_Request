@@ -1,22 +1,41 @@
 """
-This module contains utility functions and decorators for verifying and handling service and client tokens, along with OpenTelemetry tracing integration.
+This module contains utility functions and decorators for verifying and handling service and client tokens,
+along with OpenTelemetry tracing integration.
 
-It includes functions to verify service and client tokens using the `SelfAsyncService` class, which communicates with an authentication service to validate the tokens. Additionally, the module provides decorators that automatically add OpenTelemetry spans with relevant token attributes for tracking and tracing.
+It includes functions to verify service and client tokens using the `SelfAsyncService` class,
+which communicates with an authentication service to validate the tokens. Additionally, the module provides
+decorators that automatically add OpenTelemetry spans with relevant token attributes for tracking and tracing.
 
 Key Functions and Classes:
-- **verify_service_token_dep**: A function that verifies a service access token by making a request to the authentication service. If the token is invalid, it raises an `InvalidJWT` exception.
-- **dep_opentelemetry_service_decorator**: A decorator for the `verify_service_token_dep` function that starts an OpenTelemetry span and attaches various token attributes, such as issuer, subject, expiration, and role, to the span for tracing.
-- **verify_client_token_dep**: A function that verifies a client access token by making a request to the authentication service. If the token is invalid, it raises an `InvalidJWT` exception.
-- **dep_opentelemetry_client_decorator**: A decorator for the `verify_client_token_dep` function that starts an OpenTelemetry span and attaches various token attributes, such as issuer, subject, expiration, and role, to the span for tracing.
+- **verify_service_token_dep**: A function that verifies a service access token by making a request
+    to the authentication service. If the token is invalid, it raises an `InvalidJWT` exception.
+- **dep_opentelemetry_service_decorator**: A decorator for the `verify_service_token_dep` function that
+    starts an OpenTelemetry span and attaches various token attributes, such as issuer, subject, expiration,
+    and role, to the span for tracing.
+- **verify_client_token_dep**: A function that verifies a client access token by making a request to the
+    authentication service. If the token is invalid, it raises an `InvalidJWT` exception.
+- **dep_opentelemetry_client_decorator**: A decorator for the `verify_client_token_dep` function that starts
+    an OpenTelemetry span and attaches various token attributes, such as issuer, subject, expiration,
+    and role, to the span for tracing.
 
 Key Concepts:
-- **Service Token Verification**: The `verify_service_token_dep` function is responsible for validating service tokens. It sends the token to an authentication service for verification and returns the corresponding `ServiceAccessTokenPayload` if valid.
-- **Client Token Verification**: The `verify_client_token_dep` function performs the same operation but for client tokens, returning a `ClientAccessTokenPayload` if the token is valid.
-- **OpenTelemetry Integration**: The decorators `dep_opentelemetry_service_decorator` and `dep_opentelemetry_client_decorator` are designed to integrate token validation with OpenTelemetry tracing. These decorators create spans to monitor and trace the verification process, including capturing important attributes like the token’s validity and associated role.
+- **Service Token Verification**: The `verify_service_token_dep` function is responsible for validating
+    service tokens. It sends the token to an authentication service for verification and returns
+    the corresponding `ServiceAccessTokenPayload` if valid.
+- **Client Token Verification**: The `verify_client_token_dep` function performs the same operation but for
+    client tokens, returning a `ClientAccessTokenPayload` if the token is valid.
+- **OpenTelemetry Integration**: The decorators `dep_opentelemetry_service_decorator`
+    and `dep_opentelemetry_client_decorator` are designed to integrate token validation with
+    OpenTelemetry tracing. These decorators create spans to monitor and trace the verification process,
+    including capturing important attributes like the token's validity and associated role.
 
 Usage:
-    - To use the token verification functions, pass an instance of `SelfAsyncService` and a token as arguments to `verify_service_token_dep` or `verify_client_token_dep`. These functions will return the respective token payload if verification is successful.
-    - To use the decorators, apply `dep_opentelemetry_service_decorator` or `dep_opentelemetry_client_decorator` to any token verification function. These decorators will automatically trace the function’s execution and add useful metadata to the OpenTelemetry spans.
+    - To use the token verification functions, pass an instance of `SelfAsyncService` and a token as
+    arguments to `verify_service_token_dep` or `verify_client_token_dep`. These functions will return
+    the respective token payload if verification is successful.
+    - To use the decorators, apply `dep_opentelemetry_service_decorator` or
+    `dep_opentelemetry_client_decorator` to any token verification function. These decorators will
+    automatically trace the function's execution and add useful metadata to the OpenTelemetry spans.
 
 Example Usage:
     - Verifying a service token with OpenTelemetry tracing:
@@ -36,7 +55,8 @@ Dependencies:
     - `opentelemetry`: For integrating tracing and creating spans.
     - `patisson_request.core`: For the `SelfAsyncService` class used to verify tokens.
     - `patisson_request.errors`: For handling JWT-related errors via `InvalidJWT`.
-    - `patisson_request.jwt_tokens`: For the `ServiceAccessTokenPayload` and `ClientAccessTokenPayload` classes.
+    - `patisson_request.jwt_tokens`: For the `ServiceAccessTokenPayload`
+       and `ClientAccessTokenPayload` classes.
     - `patisson_request.types`: For the `Token` type used in token verification.
 
 Exceptions:
@@ -49,7 +69,7 @@ Attributes added to OpenTelemetry spans:
     - `service.access_token_exp`: Expiration time of the service token.
     - `service.access_token_iat`: Issued-at time of the service token.
     - `service.role`: Role associated with the service access token.
-    
+
     - `client.is_access_token_valid`: Whether the client access token is valid.
     - `client.access_token_iss`: Issuer of the client token.
     - `client.access_token_sub`: Subject of the client token.
@@ -70,7 +90,7 @@ from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
 from patisson_request.types import Token
 
 
-async def verify_service_token_dep(self_service: SelfAsyncService, 
+async def verify_service_token_dep(self_service: SelfAsyncService,
                                    access_token: Token
                                    ) -> ServiceAccessTokenPayload:
     """
@@ -92,6 +112,7 @@ async def verify_service_token_dep(self_service: SelfAsyncService,
             error=ErrorCode.JWT_INVALID,
         ))
     return token
+
 
 def dep_opentelemetry_service_decorator(tracer: Tracer):
     """
@@ -116,7 +137,7 @@ def dep_opentelemetry_service_decorator(tracer: Tracer):
     return decorator
 
 
-async def verify_client_token_dep(self_service: SelfAsyncService, 
+async def verify_client_token_dep(self_service: SelfAsyncService,
                                   access_token: Token
                                   ) -> ClientAccessTokenPayload:
     """
@@ -138,6 +159,7 @@ async def verify_client_token_dep(self_service: SelfAsyncService,
             error=ErrorCode.CLIENT_JWT_INVALID,
         ))
     return token
+
 
 def dep_opentelemetry_client_decorator(tracer: Tracer):
     """

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "patisson-request"
-version = "1.7.0"
+version = "1.7.1"
 description = "a library that regulates the interaction between microservices"
 authors = ["EliseyGodX"]
 license = "MIT"
@@ -22,6 +22,10 @@ pytest-httpx = "^0.35.0"
 pytest-html = "^4.1.1"
 pytest-asyncio = "^0.25.0"
 pytest = "^8.3.4"
+flake8 = "^7.1.1"
+flake8-isort = "^6.1.1"
+flake8-bugbear = "^24.12.12"
+
 
 [build-system]
 requires = ["poetry-core"]

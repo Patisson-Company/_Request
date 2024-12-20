@@ -1,14 +1,17 @@
 """
-This module defines routes and request handlers for all microservices within the system's boundaries. 
+This module defines routes and request handlers for all microservices within the system's boundaries.
 It provides structured access to microservice endpoints, including input parameters and expected responses.
 
 Functions:
     - url_params: Constructs URL query strings from keyword arguments.
 
 Key Concepts:
-- **Route Definitions**: Each route maps to a specific microservice endpoint and includes details about the service, path, and expected response types.
-- **Input Parameters**: Explicitly defined parameters for constructing requests, ensuring strong typing and validation.
-- **Response Types**: Uses predefined response body schemas for consistent deserialization of service responses.
+- **Route Definitions**: Each route maps to a specific microservice endpoint and includes details about the
+    service, path, and expected response types.
+- **Input Parameters**: Explicitly defined parameters for constructing requests, ensuring strong typing
+    and validation.
+- **Response Types**: Uses predefined response body schemas for consistent deserialization of
+    service responses.
 """
 
 from datetime import datetime
@@ -40,13 +43,13 @@ def url_params(**kwargs) -> str:
     """
     query = ''
     for kwarg in kwargs:
-        if kwarg: 
+        if kwarg:
             query += f'{kwarg}={kwargs[kwarg]}&'
     return query
 
 
 class AuthenticationRoute:
-    
+
     @staticmethod
     def health() -> GetRequest[HealthCheckBodyResponse]:
         return GetRequest(
@@ -54,16 +57,16 @@ class AuthenticationRoute:
             path='health',
             response_type=HealthCheckBodyResponse
         )
-        
+
     class api:
         class v1:
             class client:
                 class jwt:
-                    
+
                     @staticmethod
                     def create(client_id: str, client_role: Role[ClientPermissions],
-                            expire_in: Optional[Seconds] = None
-                            ) -> PostRequest[TokensSetResponse]:
+                               expire_in: Optional[Seconds] = None
+                               ) -> PostRequest[TokensSetResponse]:
                         path = 'api/v1/client/jwt/create'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -76,10 +79,9 @@ class AuthenticationRoute:
                                 )),
                             response_type=TokensSetResponse
                         )
-                    
+
                     @staticmethod
-                    def verify(client_access_token: Token
-                            ) -> PostRequest[
+                    def verify(client_access_token: Token) -> PostRequest[
                                 AuthenticationResponse.Verify[
                                     jwt_tokens.ClientAccessTokenPayload]]:
                         path = 'api/v1/client/jwt/verify'
@@ -92,12 +94,12 @@ class AuthenticationRoute:
                                 )),
                             response_type=AuthenticationResponse.Verify
                         )
-                    
+
                     @staticmethod
                     def update(client_access_token: Token,
-                            client_refresh_token: Token,
-                            expire_in: Optional[Seconds] = None
-                            ) -> PostRequest[TokensSetResponse]:
+                               client_refresh_token: Token,
+                               expire_in: Optional[Seconds] = None
+                               ) -> PostRequest[TokensSetResponse]:
                         path = 'api/v1/client/jwt/update'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -110,13 +112,12 @@ class AuthenticationRoute:
                                 )),
                             response_type=TokensSetResponse
                         )
-            
-            class service: 
+
+            class service:
                 class jwt:
-                    
+
                     @staticmethod
-                    def create(login: str, password: str
-                            ) -> PostRequest[TokensSetResponse]:
+                    def create(login: str, password: str) -> PostRequest[TokensSetResponse]:
                         path = 'api/v1/service/jwt/create'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -128,12 +129,12 @@ class AuthenticationRoute:
                                 )),
                             response_type=TokensSetResponse
                         )
-                    
+
                     @staticmethod
-                    def verify(verified_service_jwt: Token
-                            ) -> PostRequest[
+                    def verify(verified_service_jwt: Token) -> PostRequest[
                                 AuthenticationResponse.Verify[
-                                    jwt_tokens.ServiceAccessTokenPayload]]:
+                                    jwt_tokens.ServiceAccessTokenPayload]
+                                ]:
                         path = 'api/v1/service/jwt/verify'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -144,10 +145,9 @@ class AuthenticationRoute:
                                 )),
                             response_type=AuthenticationResponse.Verify
                         )
-                    
+
                     @staticmethod
-                    def update(refresh_token: Token
-                            ) -> PostRequest[TokensSetResponse]:
+                    def update(refresh_token: Token) -> PostRequest[TokensSetResponse]:
                         path = 'api/v1/service/jwt/update'
                         return PostRequest(
                             service=Service.AUTHENTICATION,
@@ -161,7 +161,7 @@ class AuthenticationRoute:
 
 
 class BooksRoute:
-    
+
     @staticmethod
     def health() -> GetRequest[HealthCheckBodyResponse]:
         return GetRequest(
@@ -169,7 +169,7 @@ class BooksRoute:
             path='health',
             response_type=HealthCheckBodyResponse
         )
-    
+
     class graphql:
 
         @staticmethod
@@ -221,7 +221,7 @@ class BooksRoute:
                     ),
                 is_graphql=True
             )
-        
+
         @staticmethod
         def booksDeep(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
@@ -273,7 +273,7 @@ class BooksRoute:
                     ),
                 is_graphql=True
                 )
-        
+
         @staticmethod
         def authors(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
@@ -299,7 +299,7 @@ class BooksRoute:
                     ),
                 is_graphql=True
             )
-        
+
         @staticmethod
         def categories(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
@@ -325,7 +325,7 @@ class BooksRoute:
                 ),
                 is_graphql=True
             )
-        
+
         @staticmethod
         def reviews(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
@@ -357,7 +357,7 @@ class BooksRoute:
                 ),
                 is_graphql=True
             )
-        
+
         @staticmethod
         def reviewsDeep(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
@@ -409,11 +409,13 @@ class BooksRoute:
                 path='graphql',
                 response_type=BooksResponse.GcreateReview,
                 post_data=HttpxPostData(
-                    json={'query': build_query(type='mutation', name='createReview', args=args, fields=fields)}
+                    json={'query': build_query(
+                        type='mutation', name='createReview',
+                        args=args, fields=fields)}
                 ),
                 is_graphql=True
             )
-        
+
         @staticmethod
         def updateReview(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
@@ -431,11 +433,13 @@ class BooksRoute:
                 path='graphql',
                 response_type=BooksResponse.GupdateReview,
                 post_data=HttpxPostData(
-                    json={'query': build_query(type='mutation', name='updateReview', args=args, fields=fields)}
+                    json={'query': build_query(
+                        type='mutation', name='updateReview',
+                        args=args, fields=fields)}
                 ),
                 is_graphql=True
             )
-        
+
         @staticmethod
         def deleteReview(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
@@ -449,14 +453,16 @@ class BooksRoute:
                 path='graphql',
                 response_type=BooksResponse.GdeleteReview,
                 post_data=HttpxPostData(
-                    json={'query': build_query(type='mutation', name='deleteReview', args=args, fields=fields)}
+                    json={'query': build_query(
+                        type='mutation', name='deleteReview',
+                        args=args, fields=fields)}
                 ),
                 is_graphql=True
             )
 
 
 class UsersRoute:
-    
+
     @staticmethod
     def health() -> GetRequest[HealthCheckBodyResponse]:
         return GetRequest(
@@ -464,7 +470,7 @@ class UsersRoute:
             path='health',
             response_type=HealthCheckBodyResponse
         )
-    
+
     class graphql:
 
         @staticmethod
@@ -498,7 +504,7 @@ class UsersRoute:
                     ),
                 is_graphql=True
             )
-            
+
         @staticmethod
         def libraries(
             fields: Sequence[Union[GraphqlField, NestedGraphqlFields]],
@@ -522,11 +528,11 @@ class UsersRoute:
                 ),
                 is_graphql=True
             )
-    
+
     class api:
-        
+
         class v1:
-            
+
             @staticmethod
             def create_user(
                 username: str, password: str,
@@ -535,7 +541,7 @@ class UsersRoute:
                 avatar: Optional[str] = None,
                 about: Optional[str] = None,
                 expire_in: Optional[Seconds] = None
-                ) -> PostRequest[TokensSetResponse]:
+            ) -> PostRequest[TokensSetResponse]:
                 path = 'api/v1/create-user'
                 return PostRequest(
                     service=Service.USERS,
@@ -552,11 +558,11 @@ class UsersRoute:
                         )),
                     response_type=TokensSetResponse
                 )
-        
+
             @staticmethod
             def create_library(
                 book_id: str, user_id: str, status: int
-                ) -> PostRequest[SuccessResponse]:
+            ) -> PostRequest[SuccessResponse]:
                 path = 'api/v1/create-library'
                 return PostRequest(
                     service=Service.USERS,
@@ -569,12 +575,12 @@ class UsersRoute:
                         )),
                     response_type=SuccessResponse
                 )
-                
+
             @staticmethod
             def create_ban(
-                user_id: str, reason: int, 
+                user_id: str, reason: int,
                 comment: str, end_date: datetime
-                ) -> PostRequest[SuccessResponse]:
+            ) -> PostRequest[SuccessResponse]:
                 path = 'api/v1/create-ban'
                 return PostRequest(
                     service=Service.USERS,
@@ -588,7 +594,7 @@ class UsersRoute:
                         )),
                     response_type=SuccessResponse
                 )
-                
+
             @staticmethod
             def verify_user(
                 access_token: str
@@ -604,7 +610,7 @@ class UsersRoute:
                     ),
                     response_type=VerifyUserResponse
                 )
-                
+
             @staticmethod
             def update_user(
                 refresh_token: str
@@ -620,10 +626,10 @@ class UsersRoute:
                     ),
                     response_type=TokensSetResponse
                 )
-                
+
 
 class InternalMediaRoute:
-    
+
     @staticmethod
     def health() -> GetRequest[HealthCheckBodyResponse]:
         return GetRequest(
@@ -631,11 +637,11 @@ class InternalMediaRoute:
             path='health',
             response_type=HealthCheckBodyResponse
         )
-    
+
     class api:
-        
+
         class v1:
-            
+
             @staticmethod
             def upload(
                 file: bytes
@@ -649,9 +655,8 @@ class InternalMediaRoute:
                     ),  # type: ignore[]
                     response_type=IntertnalMediaResponse.FileID
                 )
-    
-        
-        
+
+
 USERS_VERIFY_ROUTE: dict[
     Service, Callable[..., PostRequest[VerifyUserResponse]]] = {
     Service.USERS: UsersRoute.api.v1.verify_user
