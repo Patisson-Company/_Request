@@ -58,11 +58,3 @@ class ReviewResponse(GraphQLBaseModel):
     success: Boolean = EmptyField()  # type: ignore[reportAssignmentType]
     errors: Optional[list[Optional['Error']]] = EmptyField()  # type: ignore[reportAssignmentType]
     typename__: Literal["ReviewResponse"] = Field(default="ReviewResponse", alias="__typename")
-
-
-Author.update_forward_refs()
-Book.update_forward_refs()
-Category.update_forward_refs()
-Error.update_forward_refs()
-Review.update_forward_refs()
-ReviewResponse.update_forward_refs()

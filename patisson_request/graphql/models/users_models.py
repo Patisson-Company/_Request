@@ -25,7 +25,3 @@ class Library(GraphQLBaseModel):
     book_id: String = EmptyField()  # type: ignore[reportAssignmentType]
     status: String = EmptyField()  # type: ignore[reportAssignmentType]
     typename__: Literal["Library"] = Field(default="Library", alias="__typename")
-    
-    
-User.update_forward_refs()
-Library.update_forward_refs()
