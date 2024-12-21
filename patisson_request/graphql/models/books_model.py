@@ -12,7 +12,7 @@ String = str
 
 class Author(GraphQLBaseModel):
     name: String = EmptyField()  # type: ignore[reportAssignmentType]
-    books: Optional[list[Optional['Book']]] = EmptyField()  # type: ignore[reportAssignmentType]
+    books: Optional[list[Optional["Book"]]] = EmptyField()  # type: ignore[reportAssignmentType]
     typename__: Literal["Author"] = Field(default="Author", alias="__typename")
 
 
@@ -20,8 +20,8 @@ class Book(GraphQLBaseModel):
     google_id: String = EmptyField()  # type: ignore[reportAssignmentType]
     id: String = EmptyField()  # type: ignore[reportAssignmentType]
     title: String = EmptyField()  # type: ignore[reportAssignmentType]
-    authors: Optional[list[Optional['Author']]] = EmptyField()  # type: ignore[reportAssignmentType]
-    categories: Optional[list[Optional['Category']]] = EmptyField()  # type: ignore[reportAssignmentType]
+    authors: Optional[list[Optional["Author"]]] = EmptyField()  # type: ignore[reportAssignmentType]
+    categories: Optional[list[Optional["Category"]]] = EmptyField()  # type: ignore[reportAssignmentType]
     description: Optional[String] = EmptyField()  # type: ignore[reportAssignmentType]
     language: Optional[String] = EmptyField()  # type: ignore[reportAssignmentType]
     maturityRating: Optional[String] = EmptyField()  # type: ignore[reportAssignmentType]
@@ -35,7 +35,7 @@ class Book(GraphQLBaseModel):
 
 class Category(GraphQLBaseModel):
     name: String = EmptyField()  # type: ignore[reportAssignmentType]
-    books: Optional[list[Optional['Book']]] = EmptyField()  # type: ignore[reportAssignmentType]
+    books: Optional[list[Optional["Book"]]] = EmptyField()  # type: ignore[reportAssignmentType]
     typename__: Literal["Category"] = Field(default="Category", alias="__typename")
 
 
@@ -57,5 +57,5 @@ class Review(GraphQLBaseModel):
 
 class ReviewResponse(GraphQLBaseModel):
     success: Boolean = EmptyField()  # type: ignore[reportAssignmentType]
-    errors: Optional[list[Optional['Error']]] = EmptyField()  # type: ignore[reportAssignmentType]
+    errors: Optional[list[Optional["Error"]]] = EmptyField()  # type: ignore[reportAssignmentType]
     typename__: Literal["ReviewResponse"] = Field(default="ReviewResponse", alias="__typename")

@@ -1,6 +1,5 @@
 """
-This module contains utility functions and decorators for verifying and handling service and client tokens,
-along with OpenTelemetry tracing integration.
+Module contains utilities and decorators for verifying service and client tokens, with OpenTelemetry tracing.
 
 It includes functions to verify service and client tokens using the `SelfAsyncService` class,
 which communicates with an authentication service to validate the tokens. Additionally, the module provides
@@ -85,16 +84,18 @@ from opentelemetry.trace import Tracer
 
 from patisson_request.core import SelfAsyncService
 from patisson_request.errors import ErrorCode, ErrorSchema, InvalidJWT
-from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
-                                         ServiceAccessTokenPayload)
+from patisson_request.jwt_tokens import (
+    ClientAccessTokenPayload,
+    ServiceAccessTokenPayload,
+)
 from patisson_request.types import Token
 
 
-async def verify_service_token_dep(self_service: SelfAsyncService,
-                                   access_token: Token
-                                   ) -> ServiceAccessTokenPayload:
+async def verify_service_token_dep(
+    self_service: SelfAsyncService, access_token: Token
+) -> ServiceAccessTokenPayload:
     """
-    Makes a request to the authentication service to verify the service token
+    Make a request to the authentication service to verify the service token.
 
     Args:
         self_service (SelfAsyncService): instance of the class SelfAsyncService
@@ -108,19 +109,22 @@ async def verify_service_token_dep(self_service: SelfAsyncService,
     """
     token = await self_service.service_verify(service_access_token=str(access_token))
     if token is False:
-        raise InvalidJWT(ErrorSchema(
-            error=ErrorCode.JWT_INVALID,
-        ))
+        raise InvalidJWT(
+            ErrorSchema(
+                error=ErrorCode.JWT_INVALID,
+            )
+        )
     return token
 
 
 def dep_opentelemetry_service_decorator(tracer: Tracer):
     """
-    A decorator for dep that adds span with token attributes
+    Add a span with token attributes for dep.
 
     Args:
         tracer (Tracer)
     """
+
     def decorator(func: Callable[..., Awaitable[ServiceAccessTokenPayload]]):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -133,15 +137,17 @@ def dep_opentelemetry_service_decorator(tracer: Tracer):
                 span.set_attribute("service.access_token_iat", token.iat)
                 span.set_attribute("service.role", token.role.name)
             return token
+
         return wrapper
+
     return decorator
 
 
-async def verify_client_token_dep(self_service: SelfAsyncService,
-                                  access_token: Token
-                                  ) -> ClientAccessTokenPayload:
+async def verify_client_token_dep(
+    self_service: SelfAsyncService, access_token: Token
+) -> ClientAccessTokenPayload:
     """
-    Makes a request to the authentication service to verify the client token
+    Make a request to the authentication service to verify the client token.
 
     Args:
         self_service (SelfAsyncService): instance of the class SelfAsyncService
@@ -155,19 +161,22 @@ async def verify_client_token_dep(self_service: SelfAsyncService,
     """
     token = await self_service.client_verify(client_access_token=str(access_token))
     if token is False:
-        raise InvalidJWT(ErrorSchema(
-            error=ErrorCode.CLIENT_JWT_INVALID,
-        ))
+        raise InvalidJWT(
+            ErrorSchema(
+                error=ErrorCode.CLIENT_JWT_INVALID,
+            )
+        )
     return token
 
 
 def dep_opentelemetry_client_decorator(tracer: Tracer):
     """
-    A decorator for dep that adds span with token attributes
+    Add a span with token attributes for dep.
 
     Args:
         tracer (Tracer)
     """
+
     def decorator(func: Callable[..., Awaitable[ClientAccessTokenPayload]]):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -180,5 +189,7 @@ def dep_opentelemetry_client_decorator(tracer: Tracer):
                 span.set_attribute("client.access_token_iat", token.iat)
                 span.set_attribute("client.role", token.role.name)
             return token
+
         return wrapper
+
     return decorator

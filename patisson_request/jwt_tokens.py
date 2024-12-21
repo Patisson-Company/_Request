@@ -73,16 +73,22 @@ from typing import Generic, Literal, TypeAlias, TypeVar, Union
 
 from pydantic import BaseModel, field_serializer, field_validator
 
-from patisson_request.roles import (ClientPermissions, ClientRole, Permissions,
-                                    Role, ServicePermissions, ServiceRole)
+from patisson_request.roles import (
+    ClientPermissions,
+    ClientRole,
+    Permissions,
+    Role,
+    ServicePermissions,
+    ServiceRole,
+)
 from patisson_request.services import Service
 
-Bearer = TypeVar('Bearer', bound='TokenBearer')
-Type = TypeVar('Type', bound='TokenType')
+Bearer = TypeVar("Bearer", bound="TokenBearer")
+Type = TypeVar("Type", bound="TokenType")
 
 UserId: TypeAlias = str
-Sub = TypeVar('Sub', bound=Union[UserId, Service])
-ServiceSub = TypeVar('ServiceSub', bound=Service)
+Sub = TypeVar("Sub", bound=Union[UserId, Service])
+ServiceSub = TypeVar("ServiceSub", bound=Service)
 
 
 class TokenBearer(str, Enum):
@@ -106,6 +112,7 @@ class BaseTokenPayload(BaseModel, Generic[Type, Sub]):
         exp (int): The expiration timestamp of the token.
         iat (int): The issued-at timestamp of the token.
     """
+
     type: Type
     iss: str
     sub: Sub
@@ -117,9 +124,9 @@ class BaseTokenPayload(BaseModel, Generic[Type, Sub]):
         use_enum_values = True
 
 
-class BaseAccessTokenPayload(BaseTokenPayload[Literal[TokenType.ACCESS], Sub],
-                             Generic[Bearer, Permissions, Sub]
-                             ):
+class BaseAccessTokenPayload(
+    BaseTokenPayload[Literal[TokenType.ACCESS], Sub], Generic[Bearer, Permissions, Sub]
+):
     """
     Base class for access token payloads, extending BaseTokenPayload.
 
@@ -127,6 +134,7 @@ class BaseAccessTokenPayload(BaseTokenPayload[Literal[TokenType.ACCESS], Sub],
         bearer (Bearer): The bearer type (e.g., client or service).
         role (Role[Permissions]): The role associated with the token.
     """
+
     bearer: Bearer
     role: Role[Permissions]
 
@@ -136,47 +144,33 @@ class BaseAccessTokenPayload(BaseTokenPayload[Literal[TokenType.ACCESS], Sub],
 
 
 class ClientAccessTokenPayload(
-    BaseAccessTokenPayload[
-        Literal[TokenBearer.CLIENT],
-        ClientPermissions, UserId]
+    BaseAccessTokenPayload[Literal[TokenBearer.CLIENT], ClientPermissions, UserId]
 ):
-    """
-    Payload class for client access tokens.
-    """
+    """Payload class for client access tokens."""
 
-    @field_validator('role', mode='before')
-    def parse_role(cls, value) -> Role:
+    @field_validator("role", mode="before")
+    def parse_role(cls, value) -> Role:  # noqa: B902
         return ClientRole(str(value))
 
 
 class ServiceAccessTokenPayload(
-    BaseAccessTokenPayload[
-        Literal[TokenBearer.SERVICE],
-        ServicePermissions, ServiceSub],
-    Generic[ServiceSub]
+    BaseAccessTokenPayload[Literal[TokenBearer.SERVICE], ServicePermissions, ServiceSub],
+    Generic[ServiceSub],
 ):
-    """
-    Payload class for service access tokens.
-    """
+    """Payload class for service access tokens."""
 
-    @field_validator('role', mode='before')
-    def parse_role(cls, value) -> Role:
+    @field_validator("role", mode="before")
+    def parse_role(cls, value) -> Role:  # noqa: B902
         return ServiceRole(str(value))
 
 
-class RefreshTokenPayload(
-    BaseTokenPayload[
-        Literal[TokenType.REFRESH], Sub],
-    Generic[Sub]
-):
-    """
-    Payload class for refresh tokens, extending BaseTokenPayload.
-    """
+class RefreshTokenPayload(BaseTokenPayload[Literal[TokenType.REFRESH], Sub], Generic[Sub]):
+    """Payload class for refresh tokens, extending BaseTokenPayload."""
 
 
 def mask_token(token: str, visible_chars: int = 4) -> str:
     """
-    Closes the token "*" except for the last characters.
+    Close the token "*" except for the last characters.
 
     Args:
         token (str)
@@ -187,10 +181,12 @@ def mask_token(token: str, visible_chars: int = 4) -> str:
     """
     if len(token) <= visible_chars:
         return token
-    masked_part = '*' * (len(token) - visible_chars)
+    masked_part = "*" * (len(token) - visible_chars)
     visible_part = token[-visible_chars:]
     return f"{masked_part}{visible_part}"
 
 
-AccessTokenPayloadType = TypeVar("AccessTokenPayloadType", bound=Union[
-    ClientAccessTokenPayload, ServiceAccessTokenPayload])
+AccessTokenPayloadType = TypeVar(
+    "AccessTokenPayloadType",
+    bound=Union[ClientAccessTokenPayload, ServiceAccessTokenPayload],
+)

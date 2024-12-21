@@ -1,6 +1,5 @@
 """
-This module contains all Pydantic models used to define the request schemas for various microservices
-in the system.
+This module contains all Pydantic models used to define the request schemas for various microservices.
 
 The models ensure strict validation and serialization of data sent to the services. Each schema represents
 the structure of the request body that is sent to a specific microservice endpoint.
@@ -13,15 +12,20 @@ from pydantic import BaseModel, Field
 
 from patisson_request.service_responses import ResponseBodyTypeVar
 from patisson_request.services import Service
-from patisson_request.types import (Path, RequestContent, RequestData,
-                                    RequestFiles, Seconds, Token)
+from patisson_request.types import (
+    Path,
+    RequestContent,
+    RequestData,
+    RequestFiles,
+    Seconds,
+    Token,
+)
 
 
 class HttpxPostData(BaseModel):
-    """
-    A Pydantic model containing all kinds of supported post request bodies
-    """
-    json_: Optional[Any] = Field(None, alias='json')
+    """A Pydantic model containing all kinds of supported post request bodies."""
+
+    json_: Optional[Any] = Field(None, alias="json")
     data: Optional[RequestData] = None
     content: Optional[RequestContent] = None
     files: Optional[RequestFiles] = None
@@ -30,21 +34,20 @@ class HttpxPostData(BaseModel):
         arbitrary_types_allowed = True
 
     def model_dump(self, *args, **kwargs):
-        kwargs.setdefault('by_alias', True)
+        kwargs.setdefault("by_alias", True)
         return super().model_dump(*args, **kwargs)
 
 
 class BaseRequest(BaseModel, Generic[ResponseBodyTypeVar]):
-    """
-    A Pydantic model containing the meta information required for the request
-    """
+    """A Pydantic model containing the meta information required for the request."""
+
     service: Service
     path: Path
     response_type: type[ResponseBodyTypeVar]
 
     def __neg__(self) -> tuple[Service, Path, type[ResponseBodyTypeVar]]:
         """
-        Returns a tuple of variables in the order appropriate for passing to the request methods
+        Return a tuple of variables in the order appropriate for passing to the request methods.
 
         Returns:
             tuple[Service, Path, type[ResponseBodyTypeVar]]
@@ -53,23 +56,26 @@ class BaseRequest(BaseModel, Generic[ResponseBodyTypeVar]):
 
 
 class GetRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]):
-    """
-    A Pydantic model containing the meta information required for the get request
-    """
+    """A Pydantic model containing the meta information required for the get request."""
 
 
 class PostRequest(BaseRequest[ResponseBodyTypeVar], Generic[ResponseBodyTypeVar]):
-    """
-    A Pydantic model containing the meta information required for the post request
-    """
+    """A Pydantic model containing the meta information required for the post request."""
+
     post_data: HttpxPostData = HttpxPostData()  # type: ignore[reportCallIssue]
     is_graphql: bool = False
 
-    def __neg__(self) -> tuple[Service, Path,  # type: ignore[reportIncompatibleMethodOverride]
-                               type[ResponseBodyTypeVar],
-                               HttpxPostData, bool]:
+    def __neg__(  # type: ignore[reportIncompatibleMethodOverride]
+        self,
+    ) -> tuple[
+        Service,
+        Path,
+        type[ResponseBodyTypeVar],
+        HttpxPostData,
+        bool,
+    ]:
         """
-        Returns a tuple of variables in the order appropriate for passing to the request methods
+        Return a tuple of variables in the order appropriate for passing to the request methods.
 
         Returns:
             tuple[Service, Path, type[ResponseBodyTypeVar], HttpxPostData, bool]

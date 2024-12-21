@@ -5,9 +5,7 @@ from pydantic import BaseModel
 
 
 class GraphQLBaseModel(BaseModel):
-    """
-    Base Model for GraphQL object
-    """
+    """Base Model for GraphQL object."""
 
     class Config:
         allow_population_by_name = True
@@ -25,10 +23,9 @@ class GraphQLBaseModel(BaseModel):
 
 
 class EmptyField:
-    """
-    An empty field for attributes that were not requested in the graphql query
-    """
-    def __repr__(self) -> _t.Literal['< __EmptyField__ >']:
+    """An empty field for attributes that were not requested in the graphql query."""
+
+    def __repr__(self) -> _t.Literal["< __EmptyField__ >"]:
         return "< __EmptyField__ >"
 
     @staticmethod

@@ -1,5 +1,10 @@
-from patisson_request.roles import (ClientPermissions, ClientRole, Role,
-                                    ServicePermissions, ServiceRole)
+from patisson_request.roles import (
+    ClientPermissions,
+    ClientRole,
+    Role,
+    ServicePermissions,
+    ServiceRole,
+)
 
 
 def test_client_role():

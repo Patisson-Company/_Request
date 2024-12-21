@@ -1,6 +1,5 @@
 """
-This module contains all Pydantic models used to define the response schemas for various microservices
-in the system.
+This module contains all Pydantic models used to define the response schemas for various microservices.
 
 The models ensure strict validation and serialization of data received from the services.
 Each schema represents the structure of the response body returned by a specific microservice endpoint.
@@ -14,16 +13,24 @@ from patisson_request import jwt_tokens
 from patisson_request.errors import ErrorSchema
 from patisson_request.graphql.models import books_model as BooksGQL
 from patisson_request.graphql.models import users_models as UsersGQL
-from patisson_request.jwt_tokens import (AccessTokenPayloadType,
-                                         ClientAccessTokenPayload)
+from patisson_request.jwt_tokens import AccessTokenPayloadType, ClientAccessTokenPayload
 
-GraphqlResponseType = TypeVar("GraphqlResponseType", bound=Union[
-    '_GQLResponseFields.BooksService.books', '_GQLResponseFields.BooksService.booksDeep',
-    '_GQLResponseFields.BooksService.authors', '_GQLResponseFields.BooksService.categories',
-    '_GQLResponseFields.BooksService.reviews', '_GQLResponseFields.BooksService.reviewsDeep',
-    '_GQLResponseFields.BooksService.createReview', '_GQLResponseFields.BooksService.updateReview',
-    '_GQLResponseFields.BooksService.deleteReview', '_GQLResponseFields.UsersService.users',
-    '_GQLResponseFields.UsersService.libraries'])
+GraphqlResponseType = TypeVar(
+    "GraphqlResponseType",
+    bound=Union[
+        "_GQLResponseFields.BooksService.books",
+        "_GQLResponseFields.BooksService.booksDeep",
+        "_GQLResponseFields.BooksService.authors",
+        "_GQLResponseFields.BooksService.categories",
+        "_GQLResponseFields.BooksService.reviews",
+        "_GQLResponseFields.BooksService.reviewsDeep",
+        "_GQLResponseFields.BooksService.createReview",
+        "_GQLResponseFields.BooksService.updateReview",
+        "_GQLResponseFields.BooksService.deleteReview",
+        "_GQLResponseFields.UsersService.users",
+        "_GQLResponseFields.UsersService.libraries",
+    ],
+)
 
 
 class _GQLResponseFields:
@@ -107,41 +114,30 @@ class AuthenticationResponse:
 
 class BooksResponse:
 
-    class Gbooks(GraphqlResponse[_GQLResponseFields.BooksService.books]):
-        ''''''
+    class Gbooks(GraphqlResponse[_GQLResponseFields.BooksService.books]): ...
 
-    class GbooksDeep(GraphqlResponse[_GQLResponseFields.BooksService.booksDeep]):
-        ''''''
+    class GbooksDeep(GraphqlResponse[_GQLResponseFields.BooksService.booksDeep]): ...
 
-    class Gauthors(GraphqlResponse[_GQLResponseFields.BooksService.authors]):
-        ''''''
+    class Gauthors(GraphqlResponse[_GQLResponseFields.BooksService.authors]): ...
 
-    class Gcategories(GraphqlResponse[_GQLResponseFields.BooksService.categories]):
-        ''''''
+    class Gcategories(GraphqlResponse[_GQLResponseFields.BooksService.categories]): ...
 
-    class Greviews(GraphqlResponse[_GQLResponseFields.BooksService.reviews]):
-        ''''''
+    class Greviews(GraphqlResponse[_GQLResponseFields.BooksService.reviews]): ...
 
-    class GreviewsDeep(GraphqlResponse[_GQLResponseFields.BooksService.reviewsDeep]):
-        ''''''
+    class GreviewsDeep(GraphqlResponse[_GQLResponseFields.BooksService.reviewsDeep]): ...
 
-    class GcreateReview(GraphqlResponse[_GQLResponseFields.BooksService.createReview]):
-        ''''''
+    class GcreateReview(GraphqlResponse[_GQLResponseFields.BooksService.createReview]): ...
 
-    class GupdateReview(GraphqlResponse[_GQLResponseFields.BooksService.updateReview]):
-        ''''''
+    class GupdateReview(GraphqlResponse[_GQLResponseFields.BooksService.updateReview]): ...
 
-    class GdeleteReview(GraphqlResponse[_GQLResponseFields.BooksService.deleteReview]):
-        ''''''
+    class GdeleteReview(GraphqlResponse[_GQLResponseFields.BooksService.deleteReview]): ...
 
 
 class UsersResponse:
 
-    class Gusers(GraphqlResponse[_GQLResponseFields.UsersService.users]):
-        ''''''
+    class Gusers(GraphqlResponse[_GQLResponseFields.UsersService.users]): ...
 
-    class Glibraries(GraphqlResponse[_GQLResponseFields.UsersService.libraries]):
-        ''''''
+    class Glibraries(GraphqlResponse[_GQLResponseFields.UsersService.libraries]): ...
 
 
 class IntertnalMediaResponse:
@@ -151,10 +147,14 @@ class IntertnalMediaResponse:
 
 
 ResponseBodyAlias: TypeAlias = (
-    ErrorBodyResponse_4xx | ErrorBodyResponse_5xx
-    | HealthCheckBodyResponse | GraphqlResponse
+    ErrorBodyResponse_4xx
+    | ErrorBodyResponse_5xx
+    | HealthCheckBodyResponse
+    | GraphqlResponse
     | jwt_tokens.RefreshTokenPayload
-    | TokensSetResponse | SuccessResponse | VerifyUserResponse
+    | TokensSetResponse
+    | SuccessResponse
+    | VerifyUserResponse
     | AuthenticationResponse.Verify
     | IntertnalMediaResponse.FileID
 )

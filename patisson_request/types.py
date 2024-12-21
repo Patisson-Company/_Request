@@ -1,7 +1,6 @@
 from typing import Mapping, Sequence, TypeAlias
 
-from httpx._types import (RequestContent, RequestData,  # noqa: F401
-                          RequestFiles)
+from httpx._types import RequestContent, RequestData, RequestFiles  # noqa: F401
 
 Encodable: TypeAlias = bytes | memoryview | str | int | float
 Seconds: TypeAlias = int

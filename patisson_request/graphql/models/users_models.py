@@ -13,10 +13,10 @@ class User(GraphQLBaseModel):
     id: ID = EmptyField()  # type: ignore[reportAssignmentType]
     role: String = EmptyField()  # type: ignore[reportAssignmentType]
     username: String = EmptyField()  # type: ignore[reportAssignmentType]
-    about: Optional['String'] = EmptyField()  # type: ignore[reportAssignmentType]
-    avatar: Optional['String'] = EmptyField()  # type: ignore[reportAssignmentType]
-    firstName: Optional['String'] = EmptyField()  # type: ignore[reportAssignmentType]
-    lastName: Optional['String'] = EmptyField()  # type: ignore[reportAssignmentType]
+    about: Optional["String"] = EmptyField()  # type: ignore[reportAssignmentType]
+    avatar: Optional["String"] = EmptyField()  # type: ignore[reportAssignmentType]
+    firstName: Optional["String"] = EmptyField()  # type: ignore[reportAssignmentType]
+    lastName: Optional["String"] = EmptyField()  # type: ignore[reportAssignmentType]
     typename__: Literal["User"] = Field(default="User", alias="__typename")
 
 

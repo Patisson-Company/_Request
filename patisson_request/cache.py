@@ -1,5 +1,5 @@
 """
-This module provides an abstract base class and a concrete subclass for asynchronous caching systems
+This module provides an abstract base class and a concrete subclass for asynchronous caching systems.
 
 Classes:
     - BaseAsyncTTLCache: An abstract base class for cache systems that support TTL. It defines the
@@ -31,7 +31,7 @@ CACHE_DB_BY_SERVICE = {
     Service.USERS: 3,
     Service.FORUM: 4,
     Service.INTERNAL_MEDIA: 5,
-    Service.API_GATEWAY: 6
+    Service.API_GATEWAY: 6,
 }
 
 
@@ -49,13 +49,13 @@ class BaseAsyncTTLCache(abc.ABC):
         logger (logging.Logger): A logger instance for logging cache events and exceptions.
         default_cache_lifetime (Seconds | timedelta, default 60): The default lifetime for cache entries.
     """
+
     service: Service
     logger: logging.Logger
     default_cache_lifetime: Seconds | timedelta = 60
 
     @abc.abstractmethod
-    async def set(self, key: str, value: Encodable,
-                  time: Optional[Seconds | timedelta] = None) -> None:
+    async def set(self, key: str, value: Encodable, time: Optional[Seconds | timedelta] = None) -> None:
         """
         Asynchronously sets a cache entry.
 
@@ -103,21 +103,21 @@ class RedisAsyncCache(BaseAsyncTTLCache):
             Defaults to None, which determines the DB based on the service.
     """
 
-    redis_host: str = 'localhost'
+    redis_host: str = "localhost"
     redis_port: int = 6379
     cache_db: Optional[str | int] = None
 
     def __post_init__(self):
         """
-        Initializes the Redis connection instance using the specified host, port, and database.
+        Initialize the Redis connection instance using the specified host, port, and database.
 
         The database is selected based on the provided service or defaults to a preconfigured one.
         """
         self.redis = aioredis.Redis(
             host=self.redis_host,
             port=self.redis_port,
-            db=CACHE_DB_BY_SERVICE[self.service] if not self.cache_db else self.cache_db
-            )
+            db=(CACHE_DB_BY_SERVICE[self.service] if not self.cache_db else self.cache_db),
+        )
 
     async def set(self, key: str, value: Encodable, time: Optional[Seconds | timedelta] = None) -> None:
         """
@@ -136,7 +136,7 @@ class RedisAsyncCache(BaseAsyncTTLCache):
 
     async def get(self, key: str) -> bytes | None:
         """
-        Asynchronously retrieves a cache entry from Redis by its key.
+        Retrieve a cache entry from Redis by its key asynchronously.
 
         Args:
             key (str): The unique key for the cache entry.
@@ -146,7 +146,6 @@ class RedisAsyncCache(BaseAsyncTTLCache):
 
         Logs a warning if an exception occurs while getting the cache.
         """
-
         try:
             return await self.redis.get(name=key)
         except Exception as e:
@@ -156,8 +155,7 @@ class RedisAsyncCache(BaseAsyncTTLCache):
 @dataclass(kw_only=True)
 class MemcachedAsyncCache(BaseAsyncTTLCache):
     """
-    A subclass of `BaseAsyncTTLCache` that implements asynchronous caching
-    using Memcached.
+    A subclass of `BaseAsyncTTLCache` that implements asynchronous caching using Memcached.
 
     This class provides the actual logic for setting and retrieving cache entries
     asynchronously using a Memcached server.
@@ -172,18 +170,17 @@ class MemcachedAsyncCache(BaseAsyncTTLCache):
             for communication.
     """
 
-    memcached_host: str = 'localhost'
+    memcached_host: str = "localhost"
     memcached_port: int = 11211
     cache_db: Optional[str | int] = None
-    prefix_template: str = 'db{}:'
+    prefix_template: str = "db{}:"
 
     def __post_init__(self):
-        """
-        Initializes the Memcached client instance using the specified host and port.
-        """
+        """Initialize the Memcached client instance using the specified host and port."""
         self.memcached_client = pymemcache.client.base.Client((self.memcached_host, self.memcached_port))
-        self.prefix = self.prefix_template.format(CACHE_DB_BY_SERVICE[self.service]
-                                                  if not self.cache_db else self.cache_db)
+        self.prefix = self.prefix_template.format(
+            CACHE_DB_BY_SERVICE[self.service] if not self.cache_db else self.cache_db
+        )
         if isinstance(self.default_cache_lifetime, timedelta):
             self.default_cache_lifetime = int(self.default_cache_lifetime.total_seconds())
 
@@ -194,8 +191,7 @@ class MemcachedAsyncCache(BaseAsyncTTLCache):
             return int(time.total_seconds())
         return time
 
-    async def set(self, key: str, value: Encodable,
-                  time: Optional[Seconds | timedelta] = None) -> None:
+    async def set(self, key: str, value: Encodable, time: Optional[Seconds | timedelta] = None) -> None:
         """
         Asynchronously sets a cache entry in Memcached.
 

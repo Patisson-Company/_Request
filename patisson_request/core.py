@@ -1,7 +1,6 @@
 # pyright: reportPossiblyUnboundVariable=false
 """
-This module provides classes and methods for interacting with external services via HTTP requests,
-handling authentication, retry logic, and caching responses.
+This module provides classes and methods for interacting with external services via HTTP requests.
 
 Classes:
     - SelfService: A service client that constructs URLs, sends HTTP requests (GET/POST), handles
@@ -28,19 +27,28 @@ from pydantic import BaseModel
 
 from patisson_request import jwt_tokens
 from patisson_request.cache import BaseAsyncTTLCache, RedisAsyncCache
-from patisson_request.errors import (DuplicatHeadersError, ErrorCode,
-                                     UnauthorizedServiceError)
+from patisson_request.errors import (
+    DuplicatHeadersError,
+    ErrorCode,
+    UnauthorizedServiceError,
+)
 from patisson_request.graphql.models.books_model import EmptyField
-from patisson_request.jwt_tokens import (ClientAccessTokenPayload,
-                                         ServiceAccessTokenPayload,
-                                         TokenBearer)
-from patisson_request.service_responses import (ErrorBodyResponse_4xx,
-                                                ErrorBodyResponse_5xx,
-                                                ResponseBodyAlias,
-                                                ResponseBodyTypeVar)
-from patisson_request.service_routes import (USERS_VERIFY_ROUTE,
-                                             AuthenticationRoute,
-                                             HttpxPostData)
+from patisson_request.jwt_tokens import (
+    ClientAccessTokenPayload,
+    ServiceAccessTokenPayload,
+    TokenBearer,
+)
+from patisson_request.service_responses import (
+    ErrorBodyResponse_4xx,
+    ErrorBodyResponse_5xx,
+    ResponseBodyAlias,
+    ResponseBodyTypeVar,
+)
+from patisson_request.service_routes import (
+    USERS_VERIFY_ROUTE,
+    AuthenticationRoute,
+    HttpxPostData,
+)
 from patisson_request.services import Service
 from patisson_request.types import URL, HeadersType, Path, Seconds, Token
 
@@ -56,13 +64,14 @@ class Response(BaseModel, Generic[ResponseBodyTypeVar]):
         body (ResponseBodyTypeVar): The body of the response, which can be of any type specified
             by `ResponseBodyTypeVar`.
     """
+
     status_code: int
     headers: dict[str, str]
     is_error: bool
     body: ResponseBodyTypeVar
 
 
-NULL = ''
+NULL = ""
 
 
 @dataclass
@@ -97,6 +106,7 @@ class SelfAsyncService:
         logger_object (Optional[logging.Logger]): The logger instance to use for logging, default is `None`.
         logging_level (int): The logging level for the logger, default is `logging.DEBUG`.
     """
+
     self_service: Service
     login: str
     password: str
@@ -109,10 +119,10 @@ class SelfAsyncService:
     update_tokens_time: Seconds = 60 * 60 * 4
     default_max_reconnections: int = 3
     default_timeout: float = 3.0
-    default_protocol: str = 'http://'
-    default_host: str = 'localhost'
+    default_protocol: str = "http://"
+    default_host: str = "localhost"
     default_use_auth_token: bool = True
-    default_header_auth_format: str = 'Bearer {}'
+    default_header_auth_format: str = "Bearer {}"
     default_use_cache: bool = True
     default_use_graphql_cache: bool = True
     default_users_auth_service: Service = Service.USERS
@@ -129,31 +139,26 @@ class SelfAsyncService:
         self.logger.setLevel(self.logging_level)
 
         if self.self_service in self.external_services:
-            raise RuntimeError(f'The current service {self.self_service} is in the list of external services')
-        self.cache = self.cache_type(
-            service=self.self_service,
-            logger=self.logger,
-            **self.cache_kwargs)
+            raise RuntimeError(f"The current service {self.self_service} is in the list of external services")
+        self.cache = self.cache_type(service=self.self_service, logger=self.logger, **self.cache_kwargs)
 
         if self.use_telemetry:
-            from opentelemetry.instrumentation.httpx import \
-                HTTPXClientInstrumentor
+            from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
             HTTPXClientInstrumentor().instrument()
 
         logging_msg = NULL
-        secret_var = [
-            'password'
-        ]
+        secret_var = ["password"]
         for attr, value in vars(self).items():
             if attr in secret_var:
                 continue
             logging_msg += f" - {attr}: {value}\n"
-        self.logger.info(f'Initialized {self.__class__}: \n{logging_msg}')
+        self.logger.info(f"Initialized {self.__class__}: \n{logging_msg}")
 
     @staticmethod
     def dict_to_bytes(dict_: dict) -> bytes:
         """
-        Converts a dictionary to a bytes representation, using UTF-8 encoding.
+        Convert a dictionary to a bytes representation, using UTF-8 encoding.
 
         Args:
             dict_ (dict): The dictionary to convert.
@@ -161,12 +166,12 @@ class SelfAsyncService:
         Returns:
             bytes: The UTF-8 encoded byte representation of the dictionary.
         """
-        return json.dumps(dict_, default=EmptyField.empty_field_encoder).encode('utf-8')
+        return json.dumps(dict_, default=EmptyField.empty_field_encoder).encode("utf-8")
 
     @staticmethod
     def bytes_to_dict(bytes_: bytes) -> dict:
         """
-        Converts a bytes object to a dictionary.
+        Convert a bytes object to a dictionary.
 
         Args:
             bytes_ (bytes): The bytes to convert.
@@ -177,10 +182,11 @@ class SelfAsyncService:
         return json.loads(bytes_)
 
     @staticmethod
-    def remove_empty_fields_from_response_body(body: ResponseBodyAlias | BaseModel) -> dict:
+    def remove_empty_fields_from_response_body(
+        body: ResponseBodyAlias | BaseModel,
+    ) -> dict:
         """
-        Recursively removes fields with empty values from a response body,
-        including nested models and lists of models.
+        Recursively removes fields with empty values from a response body.
 
         Args:
             body (ResponseBodyAlias | BaseModel): The response body to clean up.
@@ -207,17 +213,17 @@ class SelfAsyncService:
 
     def activate_tokens_update_task(self):
         """
-        Starts the token update task asynchronously in the event loop.
+        Start the token update task asynchronously in the event loop.
 
         This method initiates a background task that periodically updates the tokens.
         """
         loop = asyncio.get_event_loop()
         loop.create_task(self.tokens_update_task())
-        self.logger.debug('the token update task has been started')
+        self.logger.debug("the token update task has been started")
 
     def extract_token_from_header(self, header: str, header_format: Optional[str] = None) -> str:
         """
-        Extracts the token from an authorization header.
+        Extract the token from an authorization header.
 
         Args:
             header (str): The authorization header.
@@ -229,12 +235,12 @@ class SelfAsyncService:
         """
         if not header_format:
             header_format = self.default_header_auth_format
-        header_format_ = header_format.replace('{}', '').strip()
-        return header.replace(header_format_, '')
+        header_format_ = header_format.replace("{}", "").strip()
+        return header.replace(header_format_, "")
 
     async def get_tokens_by_login(self) -> None:
         """
-        Fetches JWT tokens using the provided login and password.
+        Fetch JWT tokens using the provided login and password.
 
         Makes a request to the authentication service to obtain access and refresh tokens.
         Raises a `ConnectionError` if the request fails.
@@ -243,20 +249,19 @@ class SelfAsyncService:
             ConnectionError: If the request to obtain tokens fails.
         """
         response = await self.post_request(
-            *-AuthenticationRoute.api.v1.service.jwt.create(
-                login=self.login, password=self.password
-            ), use_auth_token=False
+            *-AuthenticationRoute.api.v1.service.jwt.create(login=self.login, password=self.password),
+            use_auth_token=False,
         )
         if response.is_error:
-            self.logger.critical('Failed to get a tokens by login')
-            raise ConnectionError(f'failed to get jwt tokens. Response: {response}')
+            self.logger.critical("Failed to get a tokens by login")
+            raise ConnectionError(f"failed to get jwt tokens. Response: {response}")
         self.access_token = response.body.access_token
         self.refresh_token = response.body.refresh_token
-        self.logger.info('tokens have been received by login')
+        self.logger.info("tokens have been received by login")
 
     async def get_tokens(self) -> None:
         """
-        Fetches JWT tokens using the refresh token.
+        Fetch JWT tokens using the refresh token.
 
         Makes a request to the authentication service to update the tokens using the refresh token.
         If the refresh token is not valid or the request fails, it attempts to get tokens by login.
@@ -265,20 +270,18 @@ class SelfAsyncService:
             ConnectionError: If both token fetching methods fail.
         """
         response = await self.post_request(
-            *-AuthenticationRoute.api.v1.service.jwt.update(
-                refresh_token=self.refresh_token
-            )
+            *-AuthenticationRoute.api.v1.service.jwt.update(refresh_token=self.refresh_token)
         )
         if response.is_error:
-            self.logger.warning('Failed to get a tokens')
+            self.logger.warning("Failed to get a tokens")
             return await self.get_tokens_by_login()
         self.access_token = response.body.access_token
         self.refresh_token = response.body.refresh_token
-        self.logger.info('tokens have been received')
+        self.logger.info("tokens have been received")
 
     async def get_access_token(self) -> str:
         """
-        Returns the access token, fetching it if it's not already available.
+        Return the access token, fetching it if it's not already available.
 
         If the access token is `NULL`, it attempts to fetch tokens by calling `get_tokens()`.
 
@@ -304,12 +307,11 @@ class SelfAsyncService:
             await self.get_tokens()
             await asyncio.sleep(self.update_tokens_time)
 
-    async def service_verify(self, service_access_token: str,
-                             service: Optional[Service] = None) -> (
-                                Literal[False]
-                                | ServiceAccessTokenPayload):
+    async def service_verify(
+        self, service_access_token: str, service: Optional[Service] = None
+    ) -> Literal[False] | ServiceAccessTokenPayload:
         """
-        Verifies the validity of the service's access token.
+        Verify the validity of the service's access token.
 
         This method checks the validity of the service access token by first looking for it in the cache.
         If the token is valid in the cache, it returns the payload. If not, it sends a request to verify
@@ -328,7 +330,7 @@ class SelfAsyncService:
         if cache_value:
             return ServiceAccessTokenPayload(**self.bytes_to_dict(cache_value))
         elif cache_value is bytes(False):
-            self.logger.warning(f'service {service} has an invalid token')
+            self.logger.warning(f"service {service} has an invalid token")
             return False
         else:  # cache_value is None
             response = await self.post_request(
@@ -337,25 +339,26 @@ class SelfAsyncService:
             payload = response.body.payload  # type: ignore[reportAssignmentType]
             if not response.body.is_verify:
                 await self.cache.set(service_access_token + TokenBearer.SERVICE.value, bytes(False))
-                self.logger.warning(f'service {service} has an invalid token')
+                self.logger.warning(f"service {service} has an invalid token")
                 return False
             payload: jwt_tokens.ServiceAccessTokenPayload
             if service is not None and Service(payload.sub).value != service.value:
                 await self.cache.set(service_access_token + TokenBearer.SERVICE.value, bytes(False))
-                self.logger.critical(f'service {service} has someone elses token')
+                self.logger.critical(f"service {service} has someone elses token")
                 return False
-            await self.cache.set(service_access_token + TokenBearer.SERVICE.value,
-                                 self.dict_to_bytes(payload.model_dump()),
-                                 payload.exp - int(time.time()))
-            self.logger.info(f'the service token {service} is valid')
+            await self.cache.set(
+                service_access_token + TokenBearer.SERVICE.value,
+                self.dict_to_bytes(payload.model_dump()),
+                payload.exp - int(time.time()),
+            )
+            self.logger.info(f"the service token {service} is valid")
             return payload
 
-    async def client_verify(self, client_access_token: str,
-                            users_auth_service: Optional[Service] = None) -> (
-                                Literal[False] | ClientAccessTokenPayload
-                                ):
+    async def client_verify(
+        self, client_access_token: str, users_auth_service: Optional[Service] = None
+    ) -> Literal[False] | ClientAccessTokenPayload:
         """
-        Verifies the validity of the client's access token.
+        Verify the validity of the client's access token.
 
         This method checks the validity of the client access token by first looking for it in the cache.
         If the token is valid in the cache, it returns the payload. If not, it sends a request to verify
@@ -377,28 +380,33 @@ class SelfAsyncService:
         if cache_value:
             return ClientAccessTokenPayload(**self.bytes_to_dict(cache_value))
         elif cache_value is bytes(False):
-            self.logger.info('client has an invalid token')
+            self.logger.info("client has an invalid token")
             return False
         else:  # cache_value is None
-            response = await self.post_request(
-                *-USERS_VERIFY_ROUTE[users_auth_service](client_access_token)
-            )
+            response = await self.post_request(*-USERS_VERIFY_ROUTE[users_auth_service](client_access_token))
             payload = response.body.payload  # type: ignore[reportAssignmentType]
             if not response.body.is_verify:
                 await self.cache.set(client_access_token + TokenBearer.CLIENT.value, bytes(False))
-                self.logger.info('client has an invalid token')
+                self.logger.info("client has an invalid token")
                 return False
             payload: jwt_tokens.ClientAccessTokenPayload
-            await self.cache.set(client_access_token + TokenBearer.CLIENT.value,
-                                 self.dict_to_bytes(payload.model_dump()),
-                                 payload.exp - int(time.time()))
-            self.logger.info('the client token is valid')
+            await self.cache.set(
+                client_access_token + TokenBearer.CLIENT.value,
+                self.dict_to_bytes(payload.model_dump()),
+                payload.exp - int(time.time()),
+            )
+            self.logger.info("the client token is valid")
             return payload
 
-    def get_url(self, service: Service, path: Path, host: Optional[str] = None,
-                protocol: Optional[str] = None) -> URL:
+    def get_url(
+        self,
+        service: Service,
+        path: Path,
+        host: Optional[str] = None,
+        protocol: Optional[str] = None,
+    ) -> URL:
         """
-        Constructs the full URL for a given service and path.
+        Construct the full URL for a given service and path.
 
         Args:
             service (Service): The service for which the URL is being constructed.
@@ -413,18 +421,29 @@ class SelfAsyncService:
         return (
             (self.default_protocol if protocol is None else protocol)
             + (self.default_host if host is None else host)
-            + '/' + service.value + '/' + path)
+            + "/"
+            + service.value
+            + "/"
+            + path
+        )
 
     async def _request(
-        self, service: Service, url: URL, method: str, response_type: type[ResponseBodyTypeVar],
-        add_headers: Optional[HeadersType] = None, headers: Optional[HeadersType] = None,
-        max_reconnections: Optional[int] = None, timeout: Optional[float] = None,
-        use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None,
+        self,
+        service: Service,
+        url: URL,
+        method: str,
+        response_type: type[ResponseBodyTypeVar],
+        add_headers: Optional[HeadersType] = None,
+        headers: Optional[HeadersType] = None,
+        max_reconnections: Optional[int] = None,
+        timeout: Optional[float] = None,
+        use_auth_token: Optional[bool] = None,
+        header_auth_format: Optional[str] = None,
         _return_nonetype_response_body: bool = False,  # the response body will be of type dict
-        **httpx_kwargs
+        **httpx_kwargs,
     ) -> Response[ResponseBodyTypeVar]:
         """
-        Sends an HTTP request with the given parameters and returns the deserialized response.
+        Send an HTTP request with the given parameters and returns the deserialized response.
 
         Args:
             service (Service): The service to which the request is made.
@@ -443,23 +462,23 @@ class SelfAsyncService:
         Returns:
             Response[ResponseBodyTypeVar]: The service's response, including status and response body.
         """
-
         if service == self.self_service:
-            e = 'Services cannot make requests to themselves'
+            e = "Services cannot make requests to themselves"
             self.logger.critical(e)
             raise RuntimeError(e)
 
         timeout = self.default_timeout if timeout is None else int(timeout)
         if timeout < 0:
-            raise ValueError('the timeout cannot be less than 0')
-        max_reconnections = (self.default_max_reconnections if max_reconnections is None
-                             else int(max_reconnections))
+            raise ValueError("the timeout cannot be less than 0")
+        max_reconnections = (
+            self.default_max_reconnections if max_reconnections is None else int(max_reconnections)
+        )
         if max_reconnections < 2:
-            raise ValueError('the max_reconnections cannot be less than 2')
-        use_auth_token = (self.default_use_auth_token if use_auth_token is None
-                          else bool(use_auth_token))
-        header_auth_format = (self.default_header_auth_format if header_auth_format is None
-                              else header_auth_format)
+            raise ValueError("the max_reconnections cannot be less than 2")
+        use_auth_token = self.default_use_auth_token if use_auth_token is None else bool(use_auth_token)
+        header_auth_format = (
+            self.default_header_auth_format if header_auth_format is None else header_auth_format
+        )
 
         if not headers:
             if add_headers:
@@ -470,7 +489,7 @@ class SelfAsyncService:
             if use_auth_token:
                 if self.access_token == NULL:
                     await self.get_tokens_by_login()
-                headers['Authorization'] = header_auth_format.format(self.access_token)
+                headers["Authorization"] = header_auth_format.format(self.access_token)
 
         if len(headers.values()) != len(set(headers.values())):
             raise DuplicatHeadersError("Duplicate headers")
@@ -479,88 +498,98 @@ class SelfAsyncService:
             for i in range(max_reconnections):  # noqa B007
                 try:
                     httpx_response = await client.request(
-                        method, url, headers=headers, timeout=timeout,
-                        **httpx_kwargs)
+                        method, url, headers=headers, timeout=timeout, **httpx_kwargs
+                    )
                     if service == Service.AUTHENTICATION:
                         break
                     if not httpx_response.status_code >= 400:
                         response_access_token = self.extract_token_from_header(
-                            httpx_response.headers['Authorization']
-                            )
+                            httpx_response.headers["Authorization"]
+                        )
                         is_verify = await self.service_verify(response_access_token, service)
                         if not is_verify:
                             raise UnauthorizedServiceError
                     break
 
                 except httpx.ConnectError:
-                    self.logger.warning(f'service {service} did not respond')
+                    self.logger.warning(f"service {service} did not respond")
 
                 except KeyError:  # httpx_response.headers['Authorization']
-                    self.logger.warning(f'service {service} does not have an authorization header')
+                    self.logger.warning(f"service {service} does not have an authorization header")
 
                 except UnauthorizedServiceError:
-                    self.logger.warning(f'service {service} has an invalid token')
+                    self.logger.warning(f"service {service} has an invalid token")
 
             if i + 1 == max_reconnections:
-                msg = f'Service {service} did not respond {max_reconnections} times (timeout {timeout})'
+                msg = f"Service {service} did not respond {max_reconnections} times (timeout {timeout})"
                 self.logger.critical(msg)
                 raise ConnectionError(msg)
 
         if httpx_response.status_code in [ErrorCode.JWT_EXPIRED, ErrorCode.JWT_INVALID]:
             await self.get_tokens()
             return await self._request(
-                service=service, url=url, method=method,
-                response_type=response_type, add_headers=add_headers,
-                headers=headers, max_reconnections=max_reconnections,
-                timeout=timeout, use_auth_token=use_auth_token,
+                service=service,
+                url=url,
+                method=method,
+                response_type=response_type,
+                add_headers=add_headers,
+                headers=headers,
+                max_reconnections=max_reconnections,
+                timeout=timeout,
+                use_auth_token=use_auth_token,
                 header_auth_format=header_auth_format,
                 _return_nonetype_response_body=_return_nonetype_response_body,
-                **httpx_kwargs)
+                **httpx_kwargs,
+            )
 
         if httpx_response.status_code >= 500:
             response = Response(
                 status_code=httpx_response.status_code,
                 headers=httpx_response.headers,  # type: ignore[reportArgumentType]
                 is_error=True,
-                body=ErrorBodyResponse_5xx(
-                    error=httpx_response.text
-                )
+                body=ErrorBodyResponse_5xx(error=httpx_response.text),
             )
         elif httpx_response.status_code >= 400:
             response = Response(
                 status_code=httpx_response.status_code,
                 headers=httpx_response.headers,  # type: ignore[reportArgumentType]
                 is_error=True,
-                body=ErrorBodyResponse_4xx(
-                    **json.loads(httpx_response.text)
-                )
+                body=ErrorBodyResponse_4xx(**json.loads(httpx_response.text)),
             )
         else:
             response = Response(
                 status_code=httpx_response.status_code,
                 headers=httpx_response.headers,  # type: ignore[reportArgumentType]
                 is_error=False,
-                body={}  # type: ignore[reportArgumentType]
+                body={},  # type: ignore[reportArgumentType]
             )
             if _return_nonetype_response_body:
                 response.body = dict(**json.loads(httpx_response.text))
             else:
                 response.body = response_type(**json.loads(httpx_response.text))
 
-        self.logger.info(f'request: {method} {url}, response: {response.status_code}')
+        self.logger.info(f"request: {method} {url}, response: {response.status_code}")
         return response  # type: ignore[reportReturnType]
 
     async def get_request(
-        self, service: Service, path: Path, response_type: type[ResponseBodyTypeVar],
-        add_headers: Optional[HeadersType] = None, headers: Optional[HeadersType] = None,
-        use_cache: Optional[bool] = None, cache_lifetime: Optional[Seconds | timedelta] = None,
-        max_reconnections: Optional[int] = None, timeout: Optional[float] = None,
-        protocol: Optional[str] = None, host: Optional[str] = None,
-        use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None,
-        **httpx_kwargs
+        self,
+        service: Service,
+        path: Path,
+        response_type: type[ResponseBodyTypeVar],
+        add_headers: Optional[HeadersType] = None,
+        headers: Optional[HeadersType] = None,
+        use_cache: Optional[bool] = None,
+        cache_lifetime: Optional[Seconds | timedelta] = None,
+        max_reconnections: Optional[int] = None,
+        timeout: Optional[float] = None,
+        protocol: Optional[str] = None,
+        host: Optional[str] = None,
+        use_auth_token: Optional[bool] = None,
+        header_auth_format: Optional[str] = None,
+        **httpx_kwargs,
     ) -> Response[ResponseBodyTypeVar]:
         """
-        Sends a GET request to the specified service and returns the deserialized response.
+        Send a GET request to the specified service and returns the deserialized response.
 
         Args:
             service (Service): The service to which the request is made.
@@ -591,33 +620,48 @@ class SelfAsyncService:
                 return Response(**self.bytes_to_dict(cache_value))
 
         response = await self._request(
-            service=service, url=url, method='GET',
-            response_type=response_type, add_headers=add_headers,
-            headers=headers, max_reconnections=max_reconnections,
-            timeout=timeout, use_auth_token=use_auth_token,
-            header_auth_format=header_auth_format, **httpx_kwargs
+            service=service,
+            url=url,
+            method="GET",
+            response_type=response_type,
+            add_headers=add_headers,
+            headers=headers,
+            max_reconnections=max_reconnections,
+            timeout=timeout,
+            use_auth_token=use_auth_token,
+            header_auth_format=header_auth_format,
+            **httpx_kwargs,
         )
 
         if use_cache and not response.is_error:
             await self.cache.set(
-                key=url, value=self.dict_to_bytes(response.model_dump()),
-                time=cache_lifetime
-                )
+                key=url,
+                value=self.dict_to_bytes(response.model_dump()),
+                time=cache_lifetime,
+            )
         return response
 
     async def post_request(
-        self, service: Service, path: Path, response_type: type[ResponseBodyTypeVar],
-        post_data: Optional[HttpxPostData] = None, is_graphql: bool = False,
-        add_headers: Optional[HeadersType] = None, headers: Optional[HeadersType] = None,
-        max_reconnections: Optional[int] = None, timeout: Optional[float] = None,
-        protocol: Optional[str] = None, host: Optional[str] = None,
-        use_auth_token: Optional[bool] = None, header_auth_format: Optional[str] = None,
+        self,
+        service: Service,
+        path: Path,
+        response_type: type[ResponseBodyTypeVar],
+        post_data: Optional[HttpxPostData] = None,
+        is_graphql: bool = False,
+        add_headers: Optional[HeadersType] = None,
+        headers: Optional[HeadersType] = None,
+        max_reconnections: Optional[int] = None,
+        timeout: Optional[float] = None,
+        protocol: Optional[str] = None,
+        host: Optional[str] = None,
+        use_auth_token: Optional[bool] = None,
+        header_auth_format: Optional[str] = None,
         graphql_cache_lifetime: Optional[Seconds | timedelta] = None,
-        use_graphql_cache: Optional[bool] = None, **httpx_kwargs
+        use_graphql_cache: Optional[bool] = None,
+        **httpx_kwargs,
     ) -> Response[ResponseBodyTypeVar]:
         """
-        Sends a POST request to the specified service with optional POST data and returns
-        the deserialized response.
+        Send a POST request to the specified service with optional POST data.
 
         Args:
             service (Service): The service to which the request is made.
@@ -649,19 +693,25 @@ class SelfAsyncService:
         httpx_kwargs |= post_data.model_dump() if post_data is not None else {}
 
         if use_cache:
-            cache_key = str(url+str(post_data.json_))  # type: ignore[reportOptionalMemberAccess]
+            cache_key = str(url + str(post_data.json_))  # type: ignore[reportOptionalMemberAccess]
             cache_value = await self.cache.get(cache_key)
             if cache_value:
                 value = self.bytes_to_dict(cache_value)
-                value['body'] = response_type(**value['body'])
+                value["body"] = response_type(**value["body"])
                 return Response(**value)
 
         response = await self._request(
-            service=service, url=url, method='POST',
-            response_type=response_type, add_headers=add_headers,
-            headers=headers, max_reconnections=max_reconnections,
-            timeout=timeout, use_auth_token=use_auth_token,
-            header_auth_format=header_auth_format, **httpx_kwargs
+            service=service,
+            url=url,
+            method="POST",
+            response_type=response_type,
+            add_headers=add_headers,
+            headers=headers,
+            max_reconnections=max_reconnections,
+            timeout=timeout,
+            use_auth_token=use_auth_token,
+            header_auth_format=header_auth_format,
+            **httpx_kwargs,
         )
 
         if use_cache and not response.is_error:
@@ -669,12 +719,13 @@ class SelfAsyncService:
                 response_copy = response.model_copy(deep=True)
                 response_copy.body = self.remove_empty_fields_from_response_body(
                     response_copy.body
-                    )  # type: ignore[reportAttributeAccessIssue]
+                )  # type: ignore[reportAttributeAccessIssue]
             else:
                 response_copy = response
             await self.cache.set(
-                key=cache_key, time=graphql_cache_lifetime,
-                value=self.dict_to_bytes(response_copy.model_dump())
+                key=cache_key,
+                time=graphql_cache_lifetime,
+                value=self.dict_to_bytes(response_copy.model_dump()),
             )
 
         return response
