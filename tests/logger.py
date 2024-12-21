@@ -1,5 +1,6 @@
 import logging
 
+
 def _create_test_logger() -> logging.Logger:
     logger = logging.getLogger("test_logger")
     logger.setLevel(logging.DEBUG)
@@ -11,5 +12,6 @@ def _create_test_logger() -> logging.Logger:
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
     return logger
+
 
 logger = _create_test_logger()

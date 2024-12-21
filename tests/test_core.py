@@ -16,6 +16,7 @@ TEST_PASSWORD = 'test_password'
 TEST_ACCESS_TOKEN = 'test access token'
 TEST_REFRESH_TOKEN = 'test refresh token'
 
+
 @pytest.fixture(scope="module")
 def SelfService() -> SelfAsyncService:
     return SelfAsyncService(
@@ -24,14 +25,14 @@ def SelfService() -> SelfAsyncService:
         password=TEST_PASSWORD,
         external_services=[Service.AUTHENTICATION]
     )
-    
-    
+
+
 @pytest.fixture
 def mock_auth(httpx_mock: HTTPXMock) -> HTTPXMock:
     def request_callback(request: httpx.Request) -> httpx.Response:
-        
+
         if (request.url == "http://localhost/authentication/api/v1/service/jwt/create"
-            and request.method == "POST"):
+                and request.method == "POST"):
             body = json.loads(request.content.decode('utf-8'))
             assert body['login'] == TEST_LOGIN
             assert body['password'] == TEST_PASSWORD
@@ -42,9 +43,9 @@ def mock_auth(httpx_mock: HTTPXMock) -> HTTPXMock:
                     refresh_token=TEST_REFRESH_TOKEN
                 ).model_dump())
             )
-                
+
         elif (request.url == "http://localhost/authentication/api/v1/service/jwt/update"
-            and request.method == "POST"):
+                and request.method == "POST"):
             body = json.loads(request.content.decode('utf-8'))
             assert request.headers.get('Authorization') == f'Bearer {TEST_ACCESS_TOKEN}'
             assert body['refresh_token'] == TEST_REFRESH_TOKEN
@@ -55,7 +56,7 @@ def mock_auth(httpx_mock: HTTPXMock) -> HTTPXMock:
                     refresh_token=TEST_REFRESH_TOKEN
                 ).model_dump())
             )
-        
+
         elif request.url == "http://localhost/authentication/400":
             assert request.headers.get('Authorization') == f'Bearer {TEST_ACCESS_TOKEN}'
             return httpx.Response(
@@ -66,17 +67,17 @@ def mock_auth(httpx_mock: HTTPXMock) -> HTTPXMock:
                         ).model_dump()]
                      })
             )
-        
+
         elif request.url == "http://localhost/authentication/500":
             assert request.headers.get('Authorization') == f'Bearer {TEST_ACCESS_TOKEN}'
             return httpx.Response(
                 status_code=500,
                 content='test error'
             )
-        
+
         else:
             raise ValueError('the authentication services mock cannot respond to this request.')
-    
+
     httpx_mock.add_callback(request_callback, is_reusable=True)
     return httpx_mock
 
@@ -90,7 +91,7 @@ async def test_200_request_method(SelfService: SelfAsyncService, mock_auth: HTTP
     )
     assert isinstance(response, Response)
     assert isinstance(response.body, TokensSetResponse)
-    
+
 
 @pytest.mark.asyncio
 async def test_400_request_method(SelfService: SelfAsyncService, mock_auth: HTTPXMock):

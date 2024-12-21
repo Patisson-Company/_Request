@@ -8,7 +8,7 @@ def test_client_role():
     assert isinstance(role.name, str)
     assert isinstance(role.permissions, ClientPermissions)
     assert isinstance(role.permissions.create_ban, bool)
-    
+
 
 def test_service_role():
     role = ServiceRole._TEST
