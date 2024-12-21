@@ -589,6 +589,16 @@ class UsersRoute:
                 )
 
             @staticmethod
+            def set_avatar(avatar_data: bytes) -> PostRequest[SuccessResponse]:
+                path = "api/v1/set-avatar"
+                return PostRequest(
+                    service=Service.USERS,
+                    path=path,
+                    post_data=HttpxPostData(files={"file": avatar_data}),  # type: ignore[reportCallIssue]
+                    response_type=SuccessResponse,
+                )
+
+            @staticmethod
             def create_library(book_id: str, user_id: str, status: int) -> PostRequest[SuccessResponse]:
                 path = "api/v1/create-library"
                 return PostRequest(
@@ -660,7 +670,7 @@ class InternalMediaRoute:
                 return PostRequest(
                     service=Service.INTERNAL_MEDIA,
                     path=path,
-                    post_data=HttpxPostData(files={"file": file}),  # type: ignore[]
+                    post_data=HttpxPostData(files={"file": file}),  # type: ignore[reportCallIssue]
                     response_type=IntertnalMediaResponse.FileID,
                 )
 

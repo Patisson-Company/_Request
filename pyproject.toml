@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "patisson-request"
-version = "1.7.3"
+version = "1.8.0"
 description = "a library that regulates the interaction between microservices"
 authors = ["EliseyGodX"]
 license = "MIT"
